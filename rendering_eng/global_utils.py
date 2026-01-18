@@ -200,6 +200,9 @@ class Util:
         else:
             return b
 
+    def sort_objects_by_attr(self,obj_list, attr_name, reverse=False):
+        return sorted(obj_list, key=lambda x: getattr(x, attr_name), reverse=reverse)
+
 prin_RED = '\033[91m'
 prin_GREEN = '\033[92m'
 prin_BLUE = '\033[94m'
@@ -214,33 +217,30 @@ loader = Loader(
     error_sound=None
 )
 
-class G_obj:
+class r_obj:
     instanses = 0
-    obj_loader = loader
-    def __init__(self,x,y,sx,sy,angle,zoom,fp,render_type="chunk"):
-        self.x = x
-        self.og_x = x
-        self.y = y
-        self.og_y = y
-        self.sx = sx
-        self.sy = sy
-        self.angle,self.og_angle = angle,angle  
+    loader = loader
+    def __init__(self,x,y,sx,sy,angle,zoom,texture_fp=None,render_type="chunk"):
+        self.x,self.y,self.sx,self.sy = x,y,sx,sy
+        self.angle = angle
+        self.last_zoom = None
+        self.last_angle = None
+        self.texture_path = texture_fp
         self.render_type = render_type
-        self.last_zoom = zoom
-        self.fp = fp
-        self.id = G_obj.instanses + 1
-        G_obj.instanses += 1
-        self.rect = pygame.Rect(self.x,self.y,self.sx,self.sy)
-        self.og_image = G_obj.obj_loader.image(fp)
-        self.scale_surf(zoom)
-        self.rotate()
+        self.OG_IMAGE = self.get_df_img(texture_fp)
+        self.surf = self.render(zoom)
+        r_obj.instanses += 1
+        self.id = r_obj.instanses
 
-    def scale_surf(self,zoom):
-        new_sx = int(self.sx * zoom)
-        new_sy = int(self.sy * zoom)
-        surf = pygame.transform.scale(self.og_image,(new_sx,new_sy))
-        self.og_surf = surf
-        return surf
+    def get_df_img(self,fp):
+        if fp == None:
+            return loader.image("assets/images/None.png")
+        return self.image(fp)
+
+    def image(self,fp):
+        return r_obj.loader.image(fp)
+    def file(self,fp):
+        return r_obj.loader.data(fp)
 
     def should_scale(self,zoom):
         if self.last_zoom != zoom:
@@ -249,25 +249,22 @@ class G_obj:
         return False
 
     def should_rotate(self,angle):
-        if angle != self.og_angle:
-            self.og_angle = angle
+        if angle != self.last_angle:
+            self.last_angle = angle
             return True
         return False
 
-    def rotate(self):
-        self.surf = pygame.transform.rotate(self.og_surf,self.angle)
+    def render(self,zoom):
+        if self.should_scale(zoom):
+            self.surf = pygame.transform.scale(self.OG_IMAGE,(self.sx * zoom , self.sy * zoom))
+        if self.should_rotate(self.angle):
+            self.surf = pygame.transform.rotate(self.surf,self.angle)
+        return self.surf
 
     def get_surf(self,zoom):
-        #print(f"obj with id {self.id} is at {self.x}")
-        if self.should_scale(zoom):
-            #print(f"scaling surf from {self.last_zoom} to {zoom}")
-            self.surf = self.scale_surf(zoom)
-            self.rotate()
-            return self.surf
-        elif self.should_rotate(self.angle):
-            self.rotate()
-        return self.surf
-            
-    def get_rect(self):
-        return self.rect
+        return self.render(zoom)
+
+
+
+
 
