@@ -97,6 +97,14 @@ class Camera:
     def get_surf(self):
         return self.display_surface
 
+    def remove_chunk_obj(self,obj):
+        obj_chunk = self.get_chunk_cords(obj.x,obj.y)
+        for y in range(-1,1):
+            for x in range(-1,1):
+                chunk = self.get_chunk(obj_chunk[0]+x,obj_chunk[1]+y)
+                if obj in chunk.all_objs:
+                    chunk.all_objs.remove(obj)
+
 class Chunk:
     def __init__(self, cx, cy, chunk_size ,bg_fill_color=None,genorator=None):
         self.cx = cx
@@ -174,7 +182,6 @@ class Layar_manager:
         print(f"layar {pryoraty} duse not exsis")
         return False
 
-
     def get_layar(self,pryoraty):
         if pryoraty in self.layars:
             return self.layars[pryoraty]
@@ -196,5 +203,18 @@ class Layar_manager:
             chunk.all_objs + chunk_objs[pos]
         return layar
 
+    def add_obj(self,obj,layar_pryoraty):
+        layar = self.get_layar(layar_pryoraty)
+        if obj.render_type == "chunk" or obj.render_type == "CHUNK":
+            layar.chunkify(obj)
+        else:
+            layar.all_game_objs.append(obj)
+    def remove_obj(self,obj,layar_pryoraty):
+        layar = self.get_layar(layar_pryoraty)
+        if obj.render_type == "chunk" or obj.render_type == "CHUNK":
+            layar.remove_chunk_obj(obj)
+        else:
+            if obj in layar.all_game_objs:
+                layar.all_game_objs.remove(obj)
 
 
