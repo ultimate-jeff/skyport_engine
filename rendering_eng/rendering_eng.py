@@ -79,8 +79,6 @@ class Display_manager:
             self.rendering_thread.join() 
             print("Rendering thread stopped.")
 
-loader.play_sound("ass3")
-time.sleep(5)
 
 
 
