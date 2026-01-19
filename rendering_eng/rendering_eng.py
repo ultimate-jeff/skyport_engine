@@ -81,5 +81,6 @@ class Display_manager:
             self.rendering_thread.join() 
 
 
-
+loader.play_sound("jeffsadrsads")
+time.sleep(3)
 
