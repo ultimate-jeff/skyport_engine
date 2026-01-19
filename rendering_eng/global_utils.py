@@ -8,12 +8,16 @@ import json
 
 class Loader:
     loader_instanses = 0
-    def __init__(self,texture_map_path,GF_map_path,sound_map_path=None,loader_name=None,error_img=None,error_sound=None):
+    def __init__(self,texture_map_path=None,GF_map_path=None,sound_map_path=None,loader_name=None,error_img=None,error_sound=None):
         self.texture_map = {}
         self.file_map = {}
         self.sound_map = {}
-        self.load_texture_map(texture_map_path)
-        self.load_file_map(GF_map_path)
+        if texture_map_path != None:
+            self.load_texture_map(texture_map_path)
+        if GF_map_path != None:
+            self.load_file_map(GF_map_path)
+        if sound_map_path != None:
+            self.load_sound_map(sound_map_path)
         # loader naming for debuging
         self.error_assets = {"img":error_img,"sound":error_sound}
         Loader.loader_instanses += 1
@@ -123,27 +127,30 @@ class Loader:
         try:
             return self.texture_map[path]["value"]
         except KeyError:
-            return pygame.image.load(path).convert_alpha()
-        except Exception as e:
-            self._error("image",e,path)
-            return self.error_assets["img"]
+            try:
+                return pygame.image.load(path).convert_alpha()
+            except Exception as e:
+                self._error("image",e,path)
+                return self.error_assets["img"]
     def data(self,file_path):
         try:
             return self.file_map[file_path]["value"]
         except KeyError:
-            with open(file_path,"r") as file:
-                return json.load(file)
-        except Exception as e:
-            self._error("data",e,file_path)
-            return -1
+            try:
+                with open(file_path,"r") as file:
+                    return json.load(file)
+            except Exception as e:
+                self._error("data",e,file_path)
+                return -1
     def sound(self,file_path):
         try:
             return self.sound_map[file_path]["value"]
         except KeyError:
-            return pygame.mixer.Sound(file_path)
-        except Exception as e:
-            self._error("sound",e,file_path)
-            return self.error_assets["sound"]
+            try:
+                return pygame.mixer.Sound(file_path)
+            except Exception as e:
+                self._error("sound",e,file_path)
+                return self.error_assets["sound"]
 
     def warp_image(self,image,sizex,sizey,angle):
         image1 = pygame.transform.scale(image,(sizex,sizey))
@@ -156,21 +163,15 @@ class Loader:
         image1 = pygame.transform.scale(image,(sizex,sizey))
         return image1
 
-    def play_sound(self,file_path, volume=0.5,loops=1):
+    def play_sound(self,file_path, volume=0.5,loops=0):
         try:
             sound = self.sound(file_path)
             sound.set_volume(volume)
             sound.play(loops)
             return 1
         except Exception as e:
-            print(f" error >> loader ")
-            sound = pygame.mixer.Sound(file_path)
-            sound.set_volume(volume)
-            sound.play(loops)
-            return -1
-        except KeyError:
-            self._error("sound","KeyError",file_path)
-            return -1
+            print(f" error >> {e} from loader >> {self.loader_name} ")
+            
 
 class Util:
     def __init__(self):
@@ -214,7 +215,7 @@ loader = Loader(
     "assets/loader/sound_maps/engine_sounds.json",
     loader_name="engine_loader",
     error_img=pygame.image.load("assets/images/error.png"),
-    error_sound=None
+    error_sound=pygame.mixer.Sound("assets/sounds/error.mp3")
 )
 
 class r_obj:
