@@ -1,10 +1,9 @@
 import numpy as np
 import pygame
 import math
-import copy
-import random
 import time
 import json
+import os
 
 class Loader:
     loader_instanses = 0
@@ -57,7 +56,6 @@ class Loader:
             texture_map = json.load(file)
         self.texture_map = self.init_comon_textures(texture_map)
 
-
     def _loade_file_catagory(self,val):
         paths = val["value"]
         files = []
@@ -91,7 +89,6 @@ class Loader:
         with open(map_path,"r") as file:
             file_map = json.load(file)
         self.file_map = self.init_game_files(file_map)
-
 
     def _loade_sound_catagory(self,val):
         file_paths = val["value"]
@@ -172,7 +169,6 @@ class Loader:
         except Exception as e:
             print(f" error >> {e} from loader >> {self.loader_name} ")
             
-
 class Util:
     def __init__(self):
         pass
@@ -201,7 +197,7 @@ class Util:
         else:
             return b
 
-    def sort_objects_by_attr(self,obj_list, attr_name, reverse=False):
+    def sort_objects_by_attr(self,obj_list : list, attr_name : str, reverse=False):
         return sorted(obj_list, key=lambda x: getattr(x, attr_name), reverse=reverse)
 
 prin_RED = '\033[91m'
@@ -217,6 +213,69 @@ loader = Loader(
     error_img=pygame.image.load("assets/images/error.png"),
     error_sound=pygame.mixer.Sound("assets/sounds/error.mp3")
 )
+class Delta_timer:
+    def __init__(self):
+        # Using perf_counter for highest precision
+        self.prev_time = time.perf_counter()
+        self.dt = 0.0
+
+    def update(self):
+        now = time.perf_counter()
+        self.dt = now - self.prev_time
+        self.prev_time = now
+        return self.dt
+
+class Sprite:
+    instanses = 0
+    ld = loader
+    def __init__(self,file_path,game_fps):
+        self.dt = Delta_timer()
+        Sprite.instanses += 1
+        self.bace_path = file_path # bace path would be something like assets/sprites/test1.sptite
+        self.data = Sprite.ld.data(f"{self.bace_path}/settings.json")
+        self.game_fps = game_fps
+        self.fps = self.data["fps"]
+        self.total_frames = self.data["total_frames"]
+        self.img_dt = self.data["img_dt"]
+        self._imgs = []
+        self.scaled_imgs = []
+        self.elapsed_time = 0.0
+        self._last_zoom = None
+        self.init_imgs(file_path)
+
+    def get_frame_index(self, dt):
+        self.elapsed_time += dt
+        raw_frame = int(self.elapsed_time * self.fps)
+        index = raw_frame % self.total_frames
+        return index
+
+    def get_surf(self,zoom,angle):
+        if self._last_zoom != zoom:
+            self.scale_all(zoom)
+        ind = self.get_frame_index(self.dt.update())
+        surf = self.scaled_imgs[ind]
+        surf = pygame.transform.rotate(surf,angle)
+
+    def scale_all(self,zoom):
+        surf = pygame.surface.Surface((10,10))
+        surf.get_size()
+        self.scaled_imgs.clear()
+        for i in self._imgs:
+            surf = i
+            surf_size = i.get_size()
+            surf_size[0] *= zoom
+            surf_size[1] *= zoom
+            surf = pygame.transform.scale(surf,surf_size)
+            self.scaled_imgs.append(surf)
+
+    def init_imgs(self,FP):
+        self._imgs = Sprite.ld.image(FP)
+
+    def manual_init_imgs(self,FP):
+        for i in range(self.total_frames):
+            fp = f"img_{i}{self.img_dt}"
+            full_fp = f"{self.bace_path}/images/{fp}"
+            self._imgs.append(Sprite.ld.image(full_fp))
 
 class r_obj:
     instanses = 0
@@ -229,9 +288,15 @@ class r_obj:
         self.texture_path = texture_fp
         self.render_type = render_type
         self.OG_IMAGE = self.get_df_img(texture_fp)
-        self.surf = self.render(zoom)
+        self.surf = self.get_surf(zoom)
         r_obj.instanses += 1
         self.id = r_obj.instanses
+
+    def init_render_type(self,fp):
+        file_extension = os.path.splitext(fp)[1]
+        if file_extension == "sprite":
+            self.render_method = self.sprite_render
+        self.render_method = self.render
 
     def get_df_img(self,fp):
         if fp == None:
@@ -242,6 +307,11 @@ class r_obj:
         return r_obj.loader.image(fp)
     def file(self,fp):
         return r_obj.loader.data(fp)
+
+    def get_img(self,zoom):
+        return self.OG_IMAGE
+    def get_scaled_img(self,zoom,angle):
+        return self.scaled_surf
 
     def should_scale(self,zoom):
         if self.last_zoom != zoom:
@@ -255,15 +325,21 @@ class r_obj:
             return True
         return False
 
+    def sprite_render(self,zoom):
+        img = self.OG_IMAGE.get_surf(zoom,self.angle)
+        return img
+
     def render(self,zoom):
         if self.should_scale(zoom):
-            self.surf = pygame.transform.scale(self.OG_IMAGE,(self.sx * zoom , self.sy * zoom))
+            self.scaled_surf = pygame.transform.scale(self.OG_IMAGE,(self.sx * zoom , self.sy * zoom))
+            self.surf = pygame.transform.rotate(self.scaled_surf,self.angle)
         if self.should_rotate(self.angle):
-            self.surf = pygame.transform.rotate(self.surf,self.angle)
+            self.surf = pygame.transform.rotate(self.scaled_surf(zoom,self.angle),self.angle)
         return self.surf
 
     def get_surf(self,zoom):
-        return self.render(zoom)
+        return self.render_method(zoom)
+
 
 
 

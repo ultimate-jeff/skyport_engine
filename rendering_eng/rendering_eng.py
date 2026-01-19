@@ -1,3 +1,4 @@
+
 import random
 import time
 import sys
@@ -11,7 +12,6 @@ import threading
 pygame.init()
 pygame.display.init()
 pygame.display.set_mode((1, 1), pygame.HIDDEN)
-runing = True
 
 # engine imports
 from assets.layar_manager import *
@@ -30,6 +30,7 @@ class Display_manager:
         self.display = pygame.Surface(self.display_size)
         self.window = pygame.display.set_mode(window_size)
         self.lm = Layar_manager(self.display)
+        self.dt = Delta_timer()
 
         if not pygame.display.is_fullscreen() and force_full_screen:
             pygame.display.toggle_fullscreen()
@@ -66,6 +67,7 @@ class Display_manager:
         while self.running:
             self.render()
             self.clock(self.fps)
+            self.dt.update()
 
     def START_RENDERING_THREAD(self, fps):
         self.fps = fps
@@ -77,7 +79,6 @@ class Display_manager:
         if self.rendering_thread and self.rendering_thread.is_alive():
             self._stop_event.set()
             self.rendering_thread.join() 
-            print("Rendering thread stopped.")
 
 
 
