@@ -4,10 +4,26 @@ import math
 import time
 import json
 import os
+import sys
+import inspect
+from skyport.core.paths import PathUtil as pu
+from pathlib import Path
 
 class Util:
+    instanses = 0
     def __init__(self):
-        pass
+        Util.instanses += 1
+        #print(Util.instanses)
+        #self.ROOT_PATH = Path(__file__).resolve().parent.parent
+        if Util.instanses <= 3:
+            self.fp = self.e_fp
+        else:
+            self.fp = self.m_fp
+
+    def m_fp(self, relative_fp):
+        return relative_fp
+    def e_fp(self, relative_fp):
+        return pu.fp(relative_fp)
 
     def get_angle_and_dist(self,x1,y1,x,y):
         dx = x1 - x
@@ -39,9 +55,10 @@ class Util:
 class Loader:
     loader_instanses = 0
     lutil = Util()
-    error_img=pygame.image.load("assets/images/error.png"),
-    error_sound=pygame.mixer.Sound("assets/sounds/error.mp3")
+    error_img=pygame.image.load(lutil.fp("assets/images/error.png")),
+    error_sound=pygame.mixer.Sound(lutil.fp("assets/sounds/error.mp3"))
     def __init__(self,texture_map_path=None,GF_map_path=None,sound_map_path=None,loader_name=None,error_img=None,error_sound=None):
+        self.lutil = Util()
         self.texture_map = {}
         self.file_map = {}
         self.sound_map = {}
@@ -52,7 +69,7 @@ class Loader:
         if sound_map_path != None:
             self.load_sound_map(sound_map_path)
         # loader naming for debuging
-        self.error_assets = {"img":Loader.lutil.pryoraty(error_img,Loader.error_img),"sound":Loader.lutil.pryoraty(error_sound,Loader.error_sound)}
+        self.error_assets = {"img":self.lutil.pryoraty(error_img,Loader.error_img),"sound":self.lutil.pryoraty(error_sound,Loader.error_sound)}
         Loader.loader_instanses += 1
         self.loader_name = util.pryoraty(loader_name,str(Loader.loader_instanses))
         print(f"{prin_BLUE}++| inisalized Loader instans '{self.loader_name}' |++{prin_RESET}")
@@ -64,7 +81,7 @@ class Loader:
         paths = val["value"]
         images = []
         for path in paths:
-            images.append(pygame.image.load(path).convert_alpha())
+            images.append(pygame.image.load(self.lutil.fp(path)).convert_alpha())
         val["value"] = images
         return val
     def init_comon_textures(self,texture_map):
@@ -74,18 +91,19 @@ class Loader:
             val = TM[key]
             Type = val["type"].lower()
             if Type == "d" or Type == "defalt":
-                val["value"] = pygame.image.load(key).convert_alpha()
+                val["value"] = pygame.image.load(self.lutil.fp(key)).convert_alpha()
                 TM[key] = val
             elif Type == "r" or Type == "replace":
                 val["value"] = pygame.image.load(val["value"]).convert_alpha()
                 TM[key] = val
             elif Type == "c" or Type == "catagory":
-                val = self._loade_img_catagory(val)
+                val = self._loade_img_catagory(self.lutil.fp(val))
             else:
-                val["value"] = pygame.image.load(key).convert_alpha()
+                val["value"] = pygame.image.load(self.lutil.fp(key)).convert_alpha()
                 TM[key] = val
         return TM
     def load_texture_map(self,map_path):
+        map_path = self.lutil.fp(map_path)
         with open(map_path,"r") as file:
             texture_map = json.load(file)
         self.texture_map = self.init_comon_textures(texture_map)
@@ -94,7 +112,7 @@ class Loader:
         paths = val["value"]
         files = []
         for path in paths:
-            with open(path,"r") as file:
+            with open(self.lutil.fp(path),"r") as file:
                 files.append(json.load(file))
         val["value"] = files
         return val
@@ -105,21 +123,22 @@ class Loader:
             val = TM[key]
             Type = val["type"].lower()
             if Type == "d" or Type == "defalt":
-                with open(key,"r") as file:
+                with open(self.lutil.fp(key),"r") as file:
                     val["value"] = json.load(file)
                 TM[key] = val
             elif Type == "r" or Type == "replace":
-                with open(val["value"],"r") as file:
+                with open(self.lutil.fp(val["value"]),"r") as file:
                     val["value"] = json.load(file)
                 TM[key] = val
             elif Type == "c" or Type == "catagory":
                 val = self._loade_file_catagory(val)
             else:
-                with open(key,"r") as file:
+                with open(self.lutil.fp(key),"r") as file:
                     val["value"] = json.load(file)
                 TM[key] = val
         return TM
     def load_file_map(self,map_path):
+        map_path = self.lutil.fp(map_path)
         with open(map_path,"r") as file:
             file_map = json.load(file)
         self.file_map = self.init_game_files(file_map)
@@ -128,7 +147,7 @@ class Loader:
         file_paths = val["value"]
         sounds = []
         for file_path in file_paths:
-            sounds.append(pygame.mixer.Sound(file_path))
+            sounds.append(pygame.mixer.Sound(self.lutil.fp(file_path)))
         val["value"] = sounds
         return val
     def init_sound_map(self,sound_map):
@@ -138,18 +157,19 @@ class Loader:
             val = TM[key]
             Type = val["type"].lower()
             if Type == "d" or Type == "defalt":
-                val["value"] = pygame.mixer.Sound(key)
+                val["value"] = pygame.mixer.Sound(self.lutil.fp(key))
                 TM[key] = val
             elif Type == "r" or Type == "replace":
-                val["value"] = pygame.mixer.Sound(val["value"])
+                val["value"] = pygame.mixer.Sound(self.lutil.fp(val["value"]))
                 TM[key] = val
             elif Type == "c" or Type == "catagory":
                 val = self._loade_sound_catagory(val)
             else:
-                val["value"] = pygame.mixer.Sound(key)
+                val["value"] = pygame.mixer.Sound(self.lutil.fp(key))
                 TM[key] = val
         return TM
     def load_sound_map(self,map_path):
+        map_path = self.lutil.fp(map_path)
         with open(map_path,"r") as file:
             sound_map = json.load(file)
         self.sound_map = self.init_sound_map(sound_map)
@@ -159,7 +179,7 @@ class Loader:
             return self.texture_map[path]["value"]
         except KeyError:
             try:
-                return pygame.image.load(path).convert_alpha()
+                return pygame.image.load(self.lutil.fp(path)).convert_alpha()
             except Exception as e:
                 self._error("image",e,path)
                 return self.error_assets["img"]
@@ -168,7 +188,7 @@ class Loader:
             return self.file_map[file_path]["value"]
         except KeyError:
             try:
-                with open(file_path,"r") as file:
+                with open(self.lutil.fp(file_path),"r") as file:
                     return json.load(file)
             except Exception as e:
                 self._error("data",e,file_path)
@@ -178,7 +198,7 @@ class Loader:
             return self.sound_map[file_path]["value"]
         except KeyError:
             try:
-                return pygame.mixer.Sound(file_path)
+                return pygame.mixer.Sound(self.lutil.fp(file_path))
             except Exception as e:
                 self._error("sound",e,file_path)
                 return self.error_assets["sound"]
@@ -281,7 +301,7 @@ class Sprite:
 class r_obj:
     instanses = 0
     loader = loader
-    def __init__(self,x,y,sx,sy,angle,zoom,texture_fp=None,render_type="chunk"):
+    def __init__(self,x,y,sx,sy,angle,zoom,texture_fp=None,hitbox_rect=None,render_type="chunk"):
         self.x,self.y,self.sx,self.sy = x,y,sx,sy
         self.angle = angle
         self.last_zoom = None
@@ -293,6 +313,10 @@ class r_obj:
         self.surf = self.get_surf(zoom)
         r_obj.instanses += 1
         self.id = r_obj.instanses
+        if hitbox_rect != None:
+            self.hitbox_rect = hitbox_rect
+        else:
+            self.hitbox_rect = pygame.Rect(x,y,sx,sy)
 
     def init_render_type(self,fp):
         file_extension = os.path.splitext(fp)[1]

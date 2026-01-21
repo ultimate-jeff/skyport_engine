@@ -1,13 +1,13 @@
-
-import random
-import time
-import sys
+from pathlib import Path
 import os
-import pyperclip
-import copy
-import math
+import sys
 import pygame
 import threading
+from skyport.core.paths import PathUtil as pu
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+if BASE_DIR not in sys.path:
+   sys.path.insert(0, BASE_DIR)
 
 pygame.init()
 pygame.display.init()
