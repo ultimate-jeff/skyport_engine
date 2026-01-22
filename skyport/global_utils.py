@@ -4,8 +4,6 @@ import math
 import time
 import json
 import os
-import sys
-import inspect
 from skyport.core.paths import PathUtil as pu
 from pathlib import Path
 
@@ -55,7 +53,7 @@ class Util:
 class Loader:
     loader_instanses = 0
     lutil = Util()
-    error_img=pygame.image.load(lutil.fp("assets/images/error.png")),
+    error_img=pygame.image.load(lutil.fp("assets/images/error.png"))
     error_sound=pygame.mixer.Sound(lutil.fp("assets/sounds/error.mp3"))
     def __init__(self,texture_map_path=None,GF_map_path=None,sound_map_path=None,loader_name=None,error_img=None,error_sound=None):
         self.lutil = Util()
@@ -303,6 +301,7 @@ class r_obj:
     loader = loader
     def __init__(self,x,y,sx,sy,angle,zoom,texture_fp=None,hitbox_rect=None,render_type="chunk"):
         self.x,self.y,self.sx,self.sy = x,y,sx,sy
+        self.og_x,self.og_y = self.x,self.y
         self.angle = angle
         self.last_zoom = None
         self.last_angle = None
@@ -319,14 +318,20 @@ class r_obj:
             self.hitbox_rect = pygame.Rect(x,y,sx,sy)
 
     def init_render_type(self,fp):
-        file_extension = os.path.splitext(fp)[1]
-        if file_extension == "sprite":
-            self.render_method = self.sprite_render
-        self.render_method = self.render
+        if fp != None:
+            file_extension = os.path.splitext(fp)[1]
+            if file_extension == "sprite":
+                self.render_method = self.sprite_render
+                return
+            self.render_method = self.render
+            return
+        else:
+             self.render_method = self.render
+             return
 
     def get_df_img(self,fp):
         if fp == None:
-            return loader.image("assets/images/None.png")
+            return loader.image("assets/images/error.png")
         return self.image(fp)
 
     def image(self,fp):
@@ -360,7 +365,7 @@ class r_obj:
             self.scaled_surf = pygame.transform.scale(self.OG_IMAGE,(self.sx * zoom , self.sy * zoom))
             self.surf = pygame.transform.rotate(self.scaled_surf,self.angle)
         if self.should_rotate(self.angle):
-            self.surf = pygame.transform.rotate(self.scaled_surf(zoom,self.angle),self.angle)
+            self.surf = pygame.transform.rotate(self.scaled_surf,self.angle)
         return self.surf
 
     def get_surf(self,zoom):

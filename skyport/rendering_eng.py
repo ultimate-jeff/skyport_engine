@@ -55,19 +55,21 @@ class Display_manager:
     def render(self):
         self.display.blit(self.lm.render(),(0,0))
 
-    def clock(self,TFPS):
+    def cclock(self,TFPS):
+        self._event()
         self.loops += 1
         self.s_display = pygame.transform.smoothscale(self.display, self.new_size)
         self.window.blit(self.s_display,self.W_pos)
-        print(f"loops are at {self.loops}")
+        print(f"loops are at {self.loops} and fps is at {self.clock.get_fps():.2f}")
         pygame.display.flip()
         self.clock.tick(TFPS)
 
     def _rendering_loop(self):
         while self.running:
             self.render()
-            self.clock(self.fps)
+            self.cclock(self.fps)
             self.dt.update()
+        print("exiting render loop")
 
     def START_RENDERING_THREAD(self, fps):
         self.fps = fps
@@ -79,5 +81,11 @@ class Display_manager:
         if self.rendering_thread and self.rendering_thread.is_alive():
             self._stop_event.set()
             self.rendering_thread.join() 
+
+    def _event(self):
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                self.running = False
+                print("\nquit pressed\n")
 
 

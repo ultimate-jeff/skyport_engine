@@ -1,4 +1,3 @@
-
 import pygame
 import math
 
@@ -140,6 +139,7 @@ class Chunk:
             cam.display_surface.blit(obj.get_surf(zoom),((obj.x + self.cx) * zoom, (obj.y + self.cy) * zoom))
             if abs(obj.x - obj.og_x) >= self.size or abs(obj.y - obj.og_y) >= self.size:
                 cam.print_queue += f"obj {obj.id} is at {obj.x},{obj.y} and beeing rechunked\n"
+                obj.og_x,obj.og_y = obj.x,obj.y
                 cam.re_chunk(self.all_objs,obj)
 
     def update(self,zoom,cam):
@@ -173,7 +173,6 @@ class Layar_manager:
         if pryoraty in self.layars:
             self.layars.pop(pryoraty)
             return True
-        print(f"layar {pryoraty} duse not exsis")
         return False
     def remove_layar(self,pryoraty):
         if pryoraty in self.layars:
@@ -183,9 +182,13 @@ class Layar_manager:
         return False
 
     def get_layar(self,pryoraty):
-        if pryoraty in self.layars:
+        #print(str(self.layars) + str(pryoraty))
+        #if pryoraty in self.layars:
+        try:
             return self.layars[pryoraty]
-        return None
+        except KeyError:
+            print(f"{prin_RED}!!- error layar not in list -!!{prin_RESET}")
+            return None
 
     def get_layar_objs(self,layar):
         offset_objs = layar.all_game_objs
