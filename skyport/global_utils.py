@@ -1,14 +1,16 @@
 import numpy as np
-import pygame
+#import pygame
 import math
 import time
 import json
 import os
 from skyport.core.paths import PathUtil as pu
 from pathlib import Path
+from rendering_eng import pygame
 
 class Util:
     instanses = 0
+    print_que = ""
     def __init__(self):
         Util.instanses += 1
         #print(Util.instanses)
@@ -17,6 +19,12 @@ class Util:
             self.fp = self.e_fp
         else:
             self.fp = self.m_fp
+
+    def output_print_data():
+        print(f"{Util.print_que}__")
+        Util.print_que = ""
+    def print(string):
+        Util.print_que += string+"\n"
 
     def m_fp(self, relative_fp):
         return relative_fp
@@ -53,7 +61,7 @@ class Util:
 class Loader:
     loader_instanses = 0
     lutil = Util()
-    error_img=pygame.image.load(lutil.fp("assets/images/error.png"))
+    error_img=pygame.image.load(lutil.fp("assets/images/error.png")).convert_alpha()
     error_sound=pygame.mixer.Sound(lutil.fp("assets/sounds/error.mp3"))
     def __init__(self,texture_map_path=None,GF_map_path=None,sound_map_path=None,loader_name=None,error_img=None,error_sound=None):
         self.lutil = Util()
@@ -310,6 +318,7 @@ class r_obj:
         self.init_render_type(texture_fp)
         self.OG_IMAGE = self.get_df_img(texture_fp)
         self.surf = self.get_surf(zoom)
+        self.rect = self.surf.get_rect()
         r_obj.instanses += 1
         self.id = r_obj.instanses
         if hitbox_rect != None:

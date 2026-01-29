@@ -1,5 +1,6 @@
 import pygame
 import math
+from rendering_eng import pygame
 
 # engine imports
 from skyport.core.paths import PathUtil as pu
@@ -10,10 +11,12 @@ class Camera:
     def __init__(self, display_surface, chunk_size,world_size,bg_fill_color=None,pryoraty=None,chunk_genorator_script=None):
         self.tiles = {}
         self.all_game_objs = []
+        self._qued_game_objs = []
         self.display_surface = display_surface
         self.chunk_size = chunk_size
         self.offset_x = 0
         self.offset_y = 0
+        self.x,self.y = 0,0
         self.zoom = 1.0
         self.old_zoom = self.zoom
         self.WORLD_HIGHT = world_size[0]
@@ -25,6 +28,7 @@ class Camera:
         Camera.instances += 1
         self.pryoraty = util.pryoraty(pryoraty,Camera.instances)
         self.bg_fill_color = bg_fill_color
+        self.obj_render_surf = pygame.Surface(display_surface.get_size(),flags=pygame.SRCALPHA)
 
     def render_offset_objs(self,disp=None):
         sw, sh = self.display_surface.get_size() # sw and sh stand for screen width and screen height
@@ -37,6 +41,12 @@ class Camera:
         c_pos = self.get_chunk_cords(obj.x,obj.y)
         chunk = self.get_chunk(c_pos[0], c_pos[1])
         chunk.all_objs.append(obj)
+        #self._qued_game_objs.append(obj)
+        #if obj not in chunk.all_objs:
+        #    chunk.all_objs.append(obj)
+        #    #print(f"{prin_GREEN}Added obj {obj.id} to chunk {c_pos}{prin_RESET}")
+        #else:
+        #    self._qued_game_objs.remove(obj)
 
     def re_chunk(self,all_objs,obj):
         all_objs.remove(obj)
@@ -50,13 +60,13 @@ class Camera:
     def get_chunk(self,cx, cy):
         #return chunk at (cx, cy), create if it doesnt exist yet
         if (cx, cy) not in self.tiles:
-            self.tiles[(cx, cy)] = Chunk(cx, cy, self.chunk_size,genorator=self.genorator,bg_fill_color=self.bg_fill_color)
-            print(f"{prin_GREEN}Created chunk {cx},{cy}{prin_RESET}")
+            self.tiles[(cx, cy)] = Chunk(cx, cy, self.chunk_size,genorator=self.genorator,bg_fill_color=self.bg_fill_color,zoom=self.zoom,cam=self)
+            Util.print(f"{prin_GREEN}Created chunk {cx},{cy}{prin_RESET}")
         return self.tiles[(cx, cy)]
 
     def tick_ops(self):
         if self.print_queue != "":
-            print(self.print_queue)
+            Util.print(self.print_queue)
         self.print_queue = ""
 
     def set_zoom(self, level):
@@ -77,7 +87,7 @@ class Camera:
     def render(self, target_x, target_y):
         W, H = self.display_surface.get_size()
         z = self.zoom
-
+        self.obj_render_surf.fill((0,0,0,0))
         self.offset_x = -target_x * z + W // 2
         self.offset_y = -target_y * z + H // 2
 
@@ -86,11 +96,12 @@ class Camera:
         for cx in range(min_cx, max_cx + 1):
             for cy in range(min_cy, max_cy + 1):
                 chunk = self.get_chunk(cx, cy)
-                surf = chunk.scaled_surface(z)
-                chunk.update(self.zoom,self)
                 screen_x = cx * self.chunk_size * z + self.offset_x
                 screen_y = cy * self.chunk_size * z + self.offset_y
+                surf = chunk.scaled_surface(z)
                 self.display_surface.blit(surf, (screen_x, screen_y))
+                chunk.update(self.zoom,self,screen_x,screen_y)
+        self.display_surface.blit(self.obj_render_surf,(0,0))
         self.tick_ops()
 
     def get_surf(self):
@@ -105,7 +116,7 @@ class Camera:
                     chunk.all_objs.remove(obj)
 
 class Chunk:
-    def __init__(self, cx, cy, chunk_size ,bg_fill_color=None,genorator=None):
+    def __init__(self, cx, cy, chunk_size ,bg_fill_color=None,genorator=None,zoom=0,cam=None):
         self.cx = cx
         self.cy = cy
         self.size = chunk_size
@@ -116,8 +127,15 @@ class Chunk:
         self.tags = {}
         self.all_objs = []
         self.bg_surf = None
+        self.update_gen_script = ""
         self.generate_terrain(genorator)
         self.bg_fill_color = bg_fill_color
+        #self.update(zoom,cam,)
+        if self.bg_fill_color != None:
+            self.surf.fill(self.bg_fill_color)
+        if self.update_gen_script != "":
+            exec(self.update_gen_script)
+        self.scaled_surface(zoom)
 
     def scale__(self,zoom):
         w = max(1, int(self.size * zoom))
@@ -134,19 +152,30 @@ class Chunk:
         if genorator != None:
             exec(genorator)
 
-    def blit_objs_v2(self,zoom,cam):
+    def blit_objs_v2(self,zoom,cam,chunk_screen_x,chunk_screen_y):
         for obj in self.all_objs: # requierd atributes of rendering obj is .get_surf, .x ,.og_x , .y ,.og_y
-            cam.display_surface.blit(obj.get_surf(zoom),((obj.x + self.cx) * zoom, (obj.y + self.cy) * zoom))
-            if abs(obj.x - obj.og_x) >= self.size or abs(obj.y - obj.og_y) >= self.size:
+            surf = obj.get_surf(zoom)
+            obj.rect.x = obj.x * zoom + cam.offset_x 
+            obj.rect.y = obj.y * zoom + cam.offset_y 
+            screen_x,screen_y = obj.rect.centerx - surf.get_width()//2, obj.rect.centery - surf.get_height()//2
+                
+            #screen_x = obj.x * zoom + cam.offset_x
+            #screen_y = obj.y * zoom + cam.offset_y 
+
+            cam.obj_render_surf.blit(surf,(screen_x,screen_y))   # i was working on centerd rotations -----------------------------------------------
+
+            if abs(obj.x - obj.og_x) >= self.size or abs(obj.y - obj.og_y) >= self.size: # rechunking 
                 cam.print_queue += f"obj {obj.id} is at {obj.x},{obj.y} and beeing rechunked\n"
                 obj.og_x,obj.og_y = obj.x,obj.y
                 cam.re_chunk(self.all_objs,obj)
 
-    def update(self,zoom,cam):
+    def update(self,zoom,cam,screen_x,screen_y):
         if self.bg_fill_color != None:
             self.surf.fill(self.bg_fill_color)
-            self._scaled.fill(self.bg_fill_color)
-        self.blit_objs_v2(zoom,cam)
+        if self.update_gen_script != "":
+            exec(self.update_gen_script)
+        self.blit_objs_v2(zoom,cam,screen_x,screen_y)
+        #self.scale__(zoom)
 
 class Layar_manager:
     def __init__(self,surf):
@@ -156,7 +185,7 @@ class Layar_manager:
 
     def render(self):
         for l in self.layars:
-            l.render(l.offset_x,l.offset_y)
+            l.render(l.x,l.y)
             self.surf.blit(l.get_surf(),(0,0))
         return self.surf
 

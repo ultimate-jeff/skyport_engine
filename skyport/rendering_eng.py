@@ -18,7 +18,7 @@ from assets.layar_manager import *
 from global_utils import *
 
 class Display_manager:
-    def __init__(self,window_size,display_size,force_full_screen=True):
+    def __init__(self,window_size,display_size,force_full_screen=True,window_name="spyport engine window"):
         self.loops = 0
         self.running = True
         self.clock = pygame.time.Clock()
@@ -29,8 +29,11 @@ class Display_manager:
         self.display_size = display_size
         self.display = pygame.Surface(self.display_size)
         self.window = pygame.display.set_mode(window_size)
+        pygame.display.set_caption(window_name)
         self.lm = Layar_manager(self.display)
         self.dt = Delta_timer()
+        self.util = Util()
+        self.print_que = ""
 
         if not pygame.display.is_fullscreen() and force_full_screen:
             pygame.display.toggle_fullscreen()
@@ -56,20 +59,22 @@ class Display_manager:
         self.display.blit(self.lm.render(),(0,0))
 
     def cclock(self,TFPS):
-        self._event()
+        #self._event()
         self.loops += 1
         self.s_display = pygame.transform.smoothscale(self.display, self.new_size)
         self.window.blit(self.s_display,self.W_pos)
-        print(f"loops are at {self.loops} and fps is at {self.clock.get_fps():.2f}")
+        Util.print(f"loops are at {self.loops} and fps is at {self.clock.get_fps():.2f}")
         pygame.display.flip()
         self.clock.tick(TFPS)
 
     def _rendering_loop(self):
-        while self.running:
-            self.render()
-            self.cclock(self.fps)
-            self.dt.update()
-        print("exiting render loop")
+        try:
+            while True:
+                self.render()
+                self.cclock(self.fps)
+                self.dt.update()
+        except Exception as e:
+            print(f"exiting render loop do to {e}")
 
     def START_RENDERING_THREAD(self, fps):
         self.fps = fps
@@ -82,10 +87,18 @@ class Display_manager:
             self._stop_event.set()
             self.rendering_thread.join() 
 
-    def _event(self):
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                self.running = False
-                print("\nquit pressed\n")
+    def event(self):
+        if self.loops % 4 == 0:
+            Util.output_print_data()
+        try:
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.QUIT:
+                    self.running = False
+                    print("\nquit pressed\n")
+                    pygame.quit()
+                    #self.STOP_RENDERING_THREAD()
+        except Exception as e:
+            pass
 
 
