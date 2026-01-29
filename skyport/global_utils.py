@@ -21,6 +21,7 @@ class Util:
         else:
             self.fp = self.m_fp
         loger.log(f"Util instans {Util.instanses} inisalized")
+        self.tags = {}
     
 
     def output_print_data():
@@ -85,7 +86,7 @@ class Loader:
         loger.log(f"Loader instans '{self.loader_name}' inisalized with {Loader.loader_instanses} loader_instanses")
 
     def _error(self,Type,error,path):
-        error_msg = f"!!-error loading {Type} : {path} ->> in loader {self.loader_name} with error >> {error} -!!"
+        error_msg = f"{prin_RED}!!-error loading {Type} : {path} ->> in loader {self.loader_name} with error >> {error} -!!{prin_RESET}"
         loger.log(error_msg)
         print(error_msg)
 
@@ -380,7 +381,7 @@ class r_obj:
         if self.should_scale(zoom):
             self.scaled_surf = pygame.transform.scale(self.OG_IMAGE,(self.sx * zoom , self.sy * zoom))
             self.surf = pygame.transform.rotate(self.scaled_surf,self.angle)
-        if self.should_rotate(self.angle):
+        elif self.should_rotate(self.angle):
             self.surf = pygame.transform.rotate(self.scaled_surf,self.angle)
         return self.surf
 

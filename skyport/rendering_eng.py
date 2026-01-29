@@ -1,6 +1,7 @@
 from pathlib import Path
 import os
 import sys
+from tkinter import SEL
 import pygame
 import threading
 from pygame._sdl2.video import Window, Renderer, Texture
@@ -21,7 +22,7 @@ from global_utils import *
 
 class Display_manager:
     
-    def __init__(self,window_size,display_size,force_full_screen=True,window_name="spyport engine window"):
+    def __init__(self,window_size,display_size,force_full_screen=True,window_name="spyport engine window",resizable=True):
         self.loops = 0
         #self.win = Window("skyport engine window--", size=window_size)
         self.running = True
@@ -105,7 +106,9 @@ class Display_manager:
                     print("\nquit pressed\n")
                     self.STOP_RENDERING_THREAD()
                     pygame.quit()
+                if event.type == pygame.VIDEORESIZE:
+                    self.couculate_window_scaling()
         except Exception as e:
-            Loger.log(f"error in event handeling: {e}")
+            loger.log(f"error in event handeling: {e}")
 
 
