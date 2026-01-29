@@ -4,6 +4,7 @@ from rendering_eng import pygame
 
 # engine imports
 from skyport.core.paths import PathUtil as pu
+from skyport.core.paths import loger
 from global_utils import *
 
 class Camera:
@@ -29,6 +30,7 @@ class Camera:
         self.pryoraty = util.pryoraty(pryoraty,Camera.instances)
         self.bg_fill_color = bg_fill_color
         self.obj_render_surf = pygame.Surface(display_surface.get_size(),flags=pygame.SRCALPHA)
+        loger.log(f"Initialized camera with pryoraty of {self.pryoraty} and {Camera.instances} instances")
 
     def render_offset_objs(self,disp=None):
         sw, sh = self.display_surface.get_size() # sw and sh stand for screen width and screen height
@@ -116,6 +118,7 @@ class Camera:
                     chunk.all_objs.remove(obj)
 
 class Chunk:
+    instances = 0
     def __init__(self, cx, cy, chunk_size ,bg_fill_color=None,genorator=None,zoom=0,cam=None):
         self.cx = cx
         self.cy = cy
@@ -136,6 +139,8 @@ class Chunk:
         if self.update_gen_script != "":
             exec(self.update_gen_script)
         self.scaled_surface(zoom)
+        Chunk.instances += 1
+        loger.log(f"Initialized chunk at {cx},{cy} with a total of {Chunk.instances} created")
 
     def scale__(self,zoom):
         w = max(1, int(self.size * zoom))
@@ -182,6 +187,7 @@ class Layar_manager:
         self.surf = surf
         self.layars = []
         self.stashed_layars = []
+        loger.log("Initialized layar manager")
 
     def render(self):
         for l in self.layars:

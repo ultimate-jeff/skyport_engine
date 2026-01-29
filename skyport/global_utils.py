@@ -5,6 +5,7 @@ import time
 import json
 import os
 from skyport.core.paths import PathUtil as pu
+from skyport.core.paths import loger
 from pathlib import Path
 from rendering_eng import pygame
 
@@ -19,6 +20,8 @@ class Util:
             self.fp = self.e_fp
         else:
             self.fp = self.m_fp
+        loger.log(f"Util instans {Util.instanses} inisalized")
+    
 
     def output_print_data():
         print(f"{Util.print_que}__")
@@ -79,9 +82,12 @@ class Loader:
         Loader.loader_instanses += 1
         self.loader_name = util.pryoraty(loader_name,str(Loader.loader_instanses))
         print(f"{prin_BLUE}++| inisalized Loader instans '{self.loader_name}' |++{prin_RESET}")
+        loger.log(f"Loader instans '{self.loader_name}' inisalized with {Loader.loader_instanses} loader_instanses")
 
     def _error(self,Type,error,path):
-        print(f"{prin_RED}!!-error loading {Type} : {path} ->> in loader {self.loader_name} with error >> {error} -!!{prin_RESET}")
+        error_msg = f"!!-error loading {Type} : {path} ->> in loader {self.loader_name} with error >> {error} -!!"
+        loger.log(error_msg)
+        print(error_msg)
 
     def _loade_img_catagory(self,val):
         paths = val["value"]
@@ -325,6 +331,7 @@ class r_obj:
             self.hitbox_rect = hitbox_rect
         else:
             self.hitbox_rect = pygame.Rect(x,y,sx,sy)
+        loger.log(f"r_obj instans {self.id} inisalized at position ({self.x},{self.y}) with size ({self.sx},{self.sy})")
 
     def init_render_type(self,fp):
         if fp != None:

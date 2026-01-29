@@ -1,4 +1,11 @@
 skyport engine made by Matthew Robins and William Lee
 
-
-
+classes in skyport:
+	Display_manager,
+	Layar_manager,
+	Loader,
+	Camera,
+	r_obj,
+	Util,
+	Delta_timer,
+	Sprite,
