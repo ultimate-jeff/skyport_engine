@@ -1,10 +1,9 @@
-from pathlib import Path
+
 import os
 import sys
-from tkinter import SEL
 import pygame
 import threading
-from pygame._sdl2.video import Window, Renderer, Texture
+#from pygame._sdl2.video import Window, Renderer, Texture
 from skyport.core.paths import PathUtil as pu
 from skyport.core.paths import loger
 
@@ -35,10 +34,12 @@ class Display_manager:
         self.display = pygame.Surface(self.display_size)
         self.window = pygame.display.set_mode(window_size,pygame.DOUBLEBUF | pygame.HWSURFACE | pygame.RESIZABLE)
         pygame.display.set_caption(window_name)
-        self.lm = Layar_manager(self.display)
+        lm = Layar_manager(self.display)
         self.dt = Delta_timer()
         self.util = Util()
         self.print_que = ""
+        self.curent_game_state = "main"
+        self.game_states = {"main":lm}
 
         if not pygame.display.is_fullscreen() and force_full_screen:
             pygame.display.toggle_fullscreen()
@@ -46,6 +47,18 @@ class Display_manager:
         self.couculate_window_scaling()
         loger.log("Display manager initialized")
     
+    def get_lm(self):
+        return self.game_states[self.curent_game_state]
+    def add_game_stare(self,name,lm):
+        self.game_states[name] = lm
+        loger.log(f"added game state {name}")
+    def remove_game_stare(self,name):
+        if name in self.game_states:
+            del self.game_states[name]
+            loger.log(f"removed game state {name}")
+        else:
+            loger.log(f"tried to remove game state {name} but it does not exist")
+
     def cclock(self,TFPS):
         #self._event()
         self.loops += 1
@@ -71,14 +84,14 @@ class Display_manager:
         self,mouse_pos = (((mx - self.W_pos[0]) / self._scale),((my - self.W_pos[1]) / self._scale))
 
     def render(self):
-        self.display.blit(self.lm.render(),(0,0))
+        self.display.blit(self.game_states[self.curent_game_state].render(),(0,0))
 
     def _rendering_loop(self):
         try:
             while not self._stop_event.is_set():
                 self.render()
                 self.cclock(self.fps)
-                self.dt.update()
+                self.dt.get_dt()
         except Exception as e:
             print(f"exiting render loop do to {e}")
             loger.log(f"exiting render loop do to {e}")

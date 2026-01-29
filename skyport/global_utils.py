@@ -6,7 +6,6 @@ import json
 import os
 from skyport.core.paths import PathUtil as pu
 from skyport.core.paths import loger
-from pathlib import Path
 from rendering_eng import pygame
 
 class Util:
@@ -253,7 +252,7 @@ class Delta_timer:
         self.prev_time = time.perf_counter()
         self.dt = 0.0
 
-    def update(self):
+    def get_dt(self):
         now = time.perf_counter()
         self.dt = now - self.prev_time
         self.prev_time = now
@@ -286,7 +285,7 @@ class Sprite:
     def get_surf(self,zoom,angle):
         if self._last_zoom != zoom:
             self.scale_all(zoom)
-        ind = self.get_frame_index(self.dt.update())
+        ind = self.get_frame_index(self.dt.get_dt())
         surf = self.scaled_imgs[ind]
         surf = pygame.transform.rotate(surf,angle)
 

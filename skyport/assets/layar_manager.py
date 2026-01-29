@@ -9,7 +9,7 @@ from global_utils import *
 
 class Camera:
     instances = 0
-    def __init__(self, display_surface, chunk_size,world_size,bg_fill_color=None,pryoraty=None,chunk_genorator_script=None):
+    def __init__(self, display_surface, chunk_size,world_size,bg_fill_color=None,pryoraty=None,chunk_genorator_func=None):
         self.tiles = {}
         self.all_game_objs = []
         self._qued_game_objs = []
@@ -25,7 +25,7 @@ class Camera:
         self.CHUNKS_ON_X = self.WORLD_WIDTH // self.chunk_size
         self.CHUNKS_ON_Y = self.WORLD_HIGHT // self.chunk_size
         self.print_queue = ""
-        self.genorator = chunk_genorator_script
+        self.genorator = chunk_genorator_func
         Camera.instances += 1
         self.pryoraty = util.pryoraty(pryoraty,Camera.instances)
         self.bg_fill_color = bg_fill_color
@@ -130,14 +130,14 @@ class Chunk:
         self.tags = {}
         self.all_objs = []
         self.bg_surf = None
-        self.update_gen_script = ""
+        self.update_gen_script = None
         self.generate_terrain(genorator)
         self.bg_fill_color = bg_fill_color
         #self.update(zoom,cam,)
         if self.bg_fill_color != None:
             self.surf.fill(self.bg_fill_color)
-        if self.update_gen_script != "":
-            exec(self.update_gen_script)
+        if self.update_gen_script != None:
+            self.update_gen_script(self)
         self.scaled_surface(zoom)
         Chunk.instances += 1
         loger.log(f"Initialized chunk at {cx},{cy} with a total of {Chunk.instances} created")
@@ -155,7 +155,7 @@ class Chunk:
 
     def generate_terrain(self,genorator=None):
         if genorator != None:
-            exec(genorator)
+            genorator(self)
 
     def blit_objs_v2(self,zoom,cam,chunk_screen_x,chunk_screen_y):
         for obj in self.all_objs: # requierd atributes of rendering obj is .get_surf, .x ,.og_x , .y ,.og_y
@@ -177,8 +177,8 @@ class Chunk:
     def update(self,zoom,cam,screen_x,screen_y):
         if self.bg_fill_color != None:
             self.surf.fill(self.bg_fill_color)
-        if self.update_gen_script != "":
-            exec(self.update_gen_script)
+        if self.update_gen_script != None:
+            self.update_gen_script(self)
         self.blit_objs_v2(zoom,cam,screen_x,screen_y)
         #self.scale__(zoom)
 
