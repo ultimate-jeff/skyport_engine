@@ -163,10 +163,6 @@ class Chunk:
             obj.rect.x = obj.x * zoom + cam.offset_x 
             obj.rect.y = obj.y * zoom + cam.offset_y 
             screen_x,screen_y = obj.rect.centerx - surf.get_width()//2, obj.rect.centery - surf.get_height()//2
-                
-            #screen_x = obj.x * zoom + cam.offset_x
-            #screen_y = obj.y * zoom + cam.offset_y 
-
             cam.obj_render_surf.blit(surf,(screen_x,screen_y))   # i was working on centerd rotations -----------------------------------------------
 
             if abs(obj.x - obj.og_x) >= self.size or abs(obj.y - obj.og_y) >= self.size: # rechunking 
@@ -217,13 +213,8 @@ class Layar_manager:
         return False
 
     def get_layar(self,pryoraty):
-        #print(str(self.layars) + str(pryoraty))
-        #if pryoraty in self.layars:
-        try:
-            return self.layars[pryoraty]
-        except KeyError:
-            print(f"{prin_RED}!!- error layar not in list -!!{prin_RESET}")
-            return None
+        return self.layars[pryoraty]
+
 
     def get_layar_objs(self,layar):
         offset_objs = layar.all_game_objs

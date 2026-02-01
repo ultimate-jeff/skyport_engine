@@ -20,9 +20,9 @@ from assets.layar_manager import *
 from global_utils import *
 
 class Display_manager:
-    
     def __init__(self,window_size,display_size,force_full_screen=True,window_name="spyport engine window",resizable=True):
         self.loops = 0
+        self.print_rate = 8
         #self.win = Window("skyport engine window--", size=window_size)
         self.running = True
         self.clock = pygame.time.Clock()
@@ -109,7 +109,7 @@ class Display_manager:
         loger.log("Rendering thread stopped")
         loger.save()
     def event(self):
-        if self.loops % 4 == 0:
+        if self.loops % self.print_rate == 0:
             Util.output_print_data()
         try:
             events = pygame.event.get()
