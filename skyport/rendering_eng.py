@@ -20,11 +20,12 @@ from assets.layar_manager import *
 from global_utils import *
 
 class Display_manager:
-    def __init__(self,window_size,display_size,force_full_screen=True,window_name="spyport engine window",resizable=True):
+    def __init__(self,window_size,display_size,force_full_screen=True,window_name="spyport engine window",window_ico=None,resizable=True):
         self.loops = 0
         self.print_rate = 8
         #self.win = Window("skyport engine window--", size=window_size)
         self.running = True
+        self.window_ico = window_ico
         self.clock = pygame.time.Clock()
         self._stop_event = threading.Event()
         self.rendering_thread = None
@@ -32,6 +33,7 @@ class Display_manager:
         self.window_size = window_size
         self.display_size = display_size
         self.display = pygame.Surface(self.display_size)
+        pygame.display.set_icon(self.window_ico) if self.window_ico else None
         self.window = pygame.display.set_mode(window_size,pygame.DOUBLEBUF | pygame.HWSURFACE | pygame.RESIZABLE)
         pygame.display.set_caption(window_name)
         lm = Layar_manager(self.display)
