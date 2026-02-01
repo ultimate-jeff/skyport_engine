@@ -313,7 +313,7 @@ class Sprite:
 class r_obj:
     instanses = 0
     loader = loader
-    def __init__(self,x,y,sx,sy,angle,zoom,texture_fp=None,hitbox_rect=None,render_type="chunk"):
+    def __init__(self,x,y,sx,sy,angle,zoom,texture_fp=None,hitbox_rect=None,render_type="chunk",obj_to_bind=[]):
         self.x,self.y,self.sx,self.sy = x,y,sx,sy
         self.og_x,self.og_y = self.x,self.y
         self.angle = angle
@@ -332,6 +332,8 @@ class r_obj:
         else:
             self.hitbox_rect = pygame.Rect(x,y,sx,sy)
         loger.log(f"r_obj instans {self.id} inisalized at position ({self.x},{self.y}) with size ({self.sx},{self.sy})")
+        self.obj_bound_to = obj_to_bind
+        self.init_boud_objs_realative_cords()
 
     def init_render_type(self,fp):
         if fp != None:
@@ -384,6 +386,23 @@ class r_obj:
             self.surf = pygame.transform.rotate(self.scaled_surf,self.angle)
         return self.surf
 
+    def init_boud_objs_realative_cords(self):
+        for obj in self.obj_bound_to:
+            dx = obj.x - self.x
+            dy = obj.y - self.y
+            obj.tag["rel_dx"] = dx
+            obj.tag["rel_dy"] = dy
+    def update_bound_objs(self):
+        for obj in self.obj_bound_to:
+            obj.x = self.x + obj.tag.get("rel_dx",0)
+            obj.y = self.y + obj.tag.get("rel_dy",0)
+
     def get_surf(self,zoom):
+        self.update_bound_objs()
         return self.render_method(zoom)
+
+    def set_pos(self,x,y):
+        self.x = x
+        self.y = y
+        self.hitbox_rect.topleft = (self.x,self.y)
 
