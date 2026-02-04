@@ -5,11 +5,6 @@ skyport/gf_map_cunstructor.py
 skyport/global_utils.py
 skyport/rendering_eng.py
 skyport/skyport.py
-skyport.egg-info/PKG-INFO
-skyport.egg-info/SOURCES.txt
-skyport.egg-info/dependency_links.txt
-skyport.egg-info/requires.txt
-skyport.egg-info/top_level.txt
 skyport/assets/layar_manager.py
 skyport/assets/images/None.png
 skyport/assets/images/error.png
@@ -25,3 +20,8 @@ skyport/assets/sounds/error.mp3
 skyport/assets/sprites/test1.sprite/settings.json
 skyport/core/paths.py
 skyport/logs/engine_logs.json
+skyport_engine.egg-info/PKG-INFO
+skyport_engine.egg-info/SOURCES.txt
+skyport_engine.egg-info/dependency_links.txt
+skyport_engine.egg-info/requires.txt
+skyport_engine.egg-info/top_level.txt
