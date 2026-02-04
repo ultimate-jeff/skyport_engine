@@ -1,0 +1,6 @@
+Metadata-Version: 2.4
+Name: skyport
+Version: 0.1.4
+Requires-Dist: pygame-ce>=2.5.5
+Requires-Dist: numpy>=2.3.2
+Dynamic: requires-dist

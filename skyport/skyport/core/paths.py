@@ -16,6 +16,9 @@ class PathUtil:
 
 class ENG_Loger:
     ENGINE_LOG_PATH = PathUtil.fp("logs/engine_logs.json")
+    if not os.path.exists(ENGINE_LOG_PATH):
+        with open(ENGINE_LOG_PATH,"w") as f:
+            json.dump({"total_logs": 5,"record_engine_logs": True,"logs": []},indent=4)
     with open(ENGINE_LOG_PATH,"r") as f:
         log_file = json.load(f)
     take_logs = log_file["record_engine_logs"]
