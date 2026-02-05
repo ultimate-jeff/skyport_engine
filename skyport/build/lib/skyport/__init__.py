@@ -31,9 +31,25 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
    sys.path.insert(0, BASE_DIR)
 
-from rendering_eng import *
-from global_utils import *
-from assets.layar_manager import *
+#from rendering_eng import *
+#from global_utils import *
+#from assets.layar_manager import *
+
+from .global_utils import Loader
+from .global_utils import r_obj
+from .global_utils import Sprite
+from .global_utils import Util
+from .global_utils import Delta_timer
+
+prin_RED = '\033[91m'
+prin_GREEN = '\033[92m'
+prin_BLUE = '\033[94m'
+prin_RESET = '\033[0m'
+
+from .rendering_eng import Display_manager
+
+from .assets.layar_manager import Layar_manager
+from .assets.layar_manager import Camera
 
 
 

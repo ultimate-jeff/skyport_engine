@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 setup(
     name="skyport_engine",
     # version format: major version . minor version . patch version
-    version="0.1.5",
+    version="0.1.7",
     include_package_data=True,
     package_data={"skyport": ["*.json", "**/*.json", "*.png", "**/*.png", "*.mp3", "**/*.mp3"]},
     install_requires=[
