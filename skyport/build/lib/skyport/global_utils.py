@@ -7,7 +7,9 @@ import json
 import os
 from skyport.core.paths import PathUtil as pu
 from skyport.core.paths import loger
-from rendering_eng import pygame
+#from skyport.core.paths import pygame
+#pygame.init()
+from skyport.rendering_eng import pygame
 
 class Util:
     instanses = 0
@@ -23,6 +25,11 @@ class Util:
         loger.log(f"Util instans {Util.instanses} inisalized")
         self.tags = {}
     
+    def disp_text(self,text, font, color, x, y,display):
+        img = font.render(text, True, color)
+        rect = img.get_rect(center=(x, y))
+        display.blit(img, rect)
+        return rect
 
     def output_print_data():
         print(f"{Util.print_que}__")
@@ -42,7 +49,8 @@ class Util:
         angle = (math.degrees(math.atan2(dy, dx)) + 180) % 360
         return angle,dist
 
-    def color_swap(self,surface: pygame.Surface, old_color: tuple, new_color: tuple) -> pygame.Surface:
+    def color_swap(self,surface: 'pygame.Surface', old_color: tuple, new_color: tuple) -> 'pygame.Surface':
+        #from skyport.rendering_eng import pygame
         arr_rgb = pygame.surfarray.array3d(surface)
         arr_alpha = pygame.surfarray.array_alpha(surface)
         mask = np.all(arr_rgb == old_color, axis=-1)
@@ -236,17 +244,6 @@ class Loader:
         except Exception as e:
             print(f" error >> {e} from loader >> {self.loader_name} ")
 
-prin_RED = '\033[91m'
-prin_GREEN = '\033[92m'
-prin_BLUE = '\033[94m'
-prin_RESET = '\033[0m'
-util = Util()
-loader = Loader(
-    "assets/loader/texture_maps/engine_textures.json",
-    "assets/loader/game_file_maps/engine_assets.json",
-    "assets/loader/sound_maps/engine_sounds.json",
-    loader_name="engine_loader"
-)
 class Delta_timer:
     def __init__(self):
         # Using perf_counter for highest precision
@@ -258,6 +255,18 @@ class Delta_timer:
         self.dt = now - self.prev_time
         self.prev_time = now
         return self.dt
+
+prin_RED = '\033[91m'
+prin_GREEN = '\033[92m'
+prin_BLUE = '\033[94m'
+prin_RESET = '\033[0m'
+util = Util()
+loader = Loader(
+    "assets/loader/texture_maps/engine_textures.json",
+    "assets/loader/game_file_maps/engine_assets.json",
+    "assets/loader/sound_maps/engine_sounds.json",
+    loader_name="engine_loader"
+)
 
 class Sprite:
     instanses = 0

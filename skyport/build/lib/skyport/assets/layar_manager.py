@@ -1,11 +1,24 @@
-import pygame
+#import pygame
 import math
-from rendering_eng import pygame
+#from skyport.core.paths import pygame
+from skyport.rendering_eng import pygame
 
 # engine imports
 from skyport.core.paths import PathUtil as pu
 from skyport.core.paths import loger
-from global_utils import *
+
+#from skyport.global_utils import *
+from skyport.global_utils import Delta_timer
+from skyport.global_utils import Util
+from skyport.global_utils import Loader
+from skyport.global_utils import r_obj
+from skyport.global_utils import Sprite
+from skyport.global_utils import util
+from skyport.global_utils import loader
+from skyport.global_utils import prin_RESET
+from skyport.global_utils import prin_RED
+from skyport.global_utils import prin_GREEN
+from skyport.global_utils import prin_BLUE
 
 class Camera:
     instances = 0

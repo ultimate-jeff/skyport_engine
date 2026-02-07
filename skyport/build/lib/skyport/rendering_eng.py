@@ -1,7 +1,6 @@
 
 import os
 import sys
-import pygame
 import threading
 #from pygame._sdl2.video import Window, Renderer, Texture
 from skyport.core.paths import PathUtil as pu
@@ -11,13 +10,22 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 if BASE_DIR not in sys.path:
    sys.path.insert(0, BASE_DIR)
 
-pygame.init()
+from skyport.core.paths import pygame
+#pygame.init()
+
 pygame.display.init()
 pygame.display.set_mode((1, 1), pygame.HIDDEN)
 
 # engine imports
-from assets.layar_manager import *
-from global_utils import *
+#from skyport.assets.layar_manager import *
+from skyport.assets.layar_manager import Layar_manager
+from skyport.assets.layar_manager import Camera
+
+from skyport.global_utils import (
+    Delta_timer, Util, Loader, r_obj, Sprite, 
+    prin_RESET, prin_RED, prin_GREEN, prin_BLUE,
+    loader,util,loger
+)
 
 class Display_manager:
     def __init__(self,window_size,display_size,force_full_screen=True,window_name="spyport engine window",window_ico=None,resizable=True):
@@ -51,7 +59,7 @@ class Display_manager:
     
     def get_lm(self):
         return self.game_states[self.curent_game_state]
-    def add_game_stare(self,name,lm):
+    def add_gamestate(self,name,lm):
         self.game_states[name] = lm
         loger.log(f"added game state {name}")
     def remove_game_stare(self,name):

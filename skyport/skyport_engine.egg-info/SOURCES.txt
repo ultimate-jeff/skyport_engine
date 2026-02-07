@@ -4,7 +4,6 @@ skyport/engine_setup.py
 skyport/gf_map_cunstructor.py
 skyport/global_utils.py
 skyport/rendering_eng.py
-skyport/skyport.py
 skyport/assets/layar_manager.py
 skyport/assets/images/None.png
 skyport/assets/images/error.png
