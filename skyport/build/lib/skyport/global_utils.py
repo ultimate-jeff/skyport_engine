@@ -19,9 +19,9 @@ class Util:
         #print(Util.instanses)
         #self.ROOT_PATH = Path(__file__).resolve().parent.parent
         if Util.instanses <= 3:
-            self.fp = self.e_fp
+            self.fp = self._e_fp
         else:
-            self.fp = self.m_fp
+            self.fp = self._m_fp
         loger.log(f"Util instans {Util.instanses} inisalized")
         self.tags = {}
     
@@ -37,9 +37,9 @@ class Util:
     def print(string):
         Util.print_que += string+"\n"
 
-    def m_fp(self, relative_fp):
+    def _m_fp(self, relative_fp):
         return relative_fp
-    def e_fp(self, relative_fp):
+    def _e_fp(self, relative_fp):
         return pu.fp(relative_fp)
 
     def get_angle_and_dist(self,x1,y1,x,y):
@@ -50,6 +50,7 @@ class Util:
         return angle,dist
 
     def color_swap(self,surface: 'pygame.Surface', old_color: tuple, new_color: tuple) -> 'pygame.Surface':
+        """returns a surf that every instance of one color is replaced with a nuther"""
         #from skyport.rendering_eng import pygame
         arr_rgb = pygame.surfarray.array3d(surface)
         arr_alpha = pygame.surfarray.array_alpha(surface)
@@ -62,6 +63,7 @@ class Util:
         return new_surface
 
     def pryoraty(self,a=None,b=None):
+        """"this will alwas return a if there is an a i know aaaaaaaa thats scary"""
         if a != None:
             return a
         else:
@@ -105,7 +107,7 @@ class Loader:
             images.append(pygame.image.load(self.lutil.fp(path)).convert_alpha())
         val["value"] = images
         return val
-    def init_comon_textures(self,texture_map):
+    def _init_comon_textures(self,texture_map):
         all_keys = texture_map.keys()
         TM = texture_map
         for key in all_keys:
@@ -127,7 +129,7 @@ class Loader:
         map_path = self.lutil.fp(map_path)
         with open(map_path,"r") as file:
             texture_map = json.load(file)
-        self.texture_map = self.init_comon_textures(texture_map)
+        self.texture_map = self._init_comon_textures(texture_map)
 
     def _loade_file_catagory(self,val):
         paths = val["value"]
@@ -137,7 +139,7 @@ class Loader:
                 files.append(json.load(file))
         val["value"] = files
         return val
-    def init_game_files(self,file_map):
+    def _init_game_files(self,file_map):
         all_keys = file_map.keys()
         TM = file_map
         for key in all_keys:
@@ -162,7 +164,7 @@ class Loader:
         map_path = self.lutil.fp(map_path)
         with open(map_path,"r") as file:
             file_map = json.load(file)
-        self.file_map = self.init_game_files(file_map)
+        self.file_map = self._init_game_files(file_map)
 
     def _loade_sound_catagory(self,val):
         file_paths = val["value"]
@@ -171,7 +173,7 @@ class Loader:
             sounds.append(pygame.mixer.Sound(self.lutil.fp(file_path)))
         val["value"] = sounds
         return val
-    def init_sound_map(self,sound_map):
+    def _init_sound_map(self,sound_map):
         all_keys = sound_map.keys()
         TM = sound_map
         for key in all_keys:
@@ -193,7 +195,7 @@ class Loader:
         map_path = self.lutil.fp(map_path)
         with open(map_path,"r") as file:
             sound_map = json.load(file)
-        self.sound_map = self.init_sound_map(sound_map)
+        self.sound_map = self._init_sound_map(sound_map)
 
     def image(self,path):
         try:

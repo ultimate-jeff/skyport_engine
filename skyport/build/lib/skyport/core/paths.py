@@ -55,5 +55,7 @@ class ENG_Loger:
         self.run_time_log += f"[{datetime.datetime.now().strftime('%H:%M:%S')}] :-: {message}\n"
     def _false_log(self,message):
         pass
+    def get_logs(self):
+        return ENG_Loger.log_file["logs"]
 
 loger = ENG_Loger()

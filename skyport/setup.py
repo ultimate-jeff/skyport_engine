@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 setup(
     name="skyport_engine",
     # version format: major version . minor version . patch version
-    version="0.1.22",
+    version="0.1.25",
     include_package_data=True,
     package_data={"skyport": ["*.json", "**/*.json", "*.png", "**/*.png", "*.mp3", "**/*.mp3"]},
     install_requires=[
@@ -17,4 +17,6 @@ setup(
 
 #compile with:
 # cd "C:\Users\matth\OneDrive\Desktop\skyport" && python setup.py sdist bdist_wheel
-#pip install dist\skyport_engine-0.1.22-py3-none-any.whl
+#pip install dist\skyport_engine-0.1.25-py3-none-any.whl
+
+#twine upload dist/*

@@ -1,24 +1,17 @@
-#import pygame
+
 import math
-#from skyport.core.paths import pygame
-from skyport.rendering_eng import pygame
 
 # engine imports
+from skyport.rendering_eng import pygame
+
 from skyport.core.paths import PathUtil as pu
 from skyport.core.paths import loger
 
-#from skyport.global_utils import *
-from skyport.global_utils import Delta_timer
-from skyport.global_utils import Util
-from skyport.global_utils import Loader
-from skyport.global_utils import r_obj
-from skyport.global_utils import Sprite
-from skyport.global_utils import util
-from skyport.global_utils import loader
-from skyport.global_utils import prin_RESET
-from skyport.global_utils import prin_RED
-from skyport.global_utils import prin_GREEN
-from skyport.global_utils import prin_BLUE
+from skyport.global_utils import (
+    Delta_timer,Util,Loader,r_obj,Sprite,
+    util,loader,prin_BLUE,prin_GREEN,prin_RED,prin_RESET
+    )
+
 
 class Camera:
     instances = 0
@@ -56,12 +49,6 @@ class Camera:
         c_pos = self.get_chunk_cords(obj.x,obj.y)
         chunk = self.get_chunk(c_pos[0], c_pos[1])
         chunk.all_objs.append(obj)
-        #self._qued_game_objs.append(obj)
-        #if obj not in chunk.all_objs:
-        #    chunk.all_objs.append(obj)
-        #    #print(f"{prin_GREEN}Added obj {obj.id} to chunk {c_pos}{prin_RESET}")
-        #else:
-        #    self._qued_game_objs.remove(obj)
 
     def re_chunk(self,all_objs,obj):
         all_objs.remove(obj)
@@ -192,13 +179,18 @@ class Chunk:
         #self.scale__(zoom)
 
 class Layar_manager:
-    def __init__(self,surf):
+    instanses = 0
+    def __init__(self,surf,fill_bg_color=None):
+        self.fill_bg_color = fill_bg_color
         self.surf = surf
         self.layars = []
         self.stashed_layars = []
-        loger.log("Initialized layar manager")
+        Layar_manager.instanses += 1
+        loger.log(f"Initialized layar manager instance {Layar_manager.instanses}")
 
     def render(self):
+        if self.fill_bg_color != None:
+            self.surf.fill(self.fill_bg_color)
         for l in self.layars:
             l.render(l.x,l.y)
             self.surf.blit(l.get_surf(),(0,0))
@@ -226,8 +218,11 @@ class Layar_manager:
         return False
 
     def get_layar(self,pryoraty):
-        return self.layars[pryoraty]
-
+        try:
+            return self.layars[pryoraty]
+        except IndexError:
+            print(f"{prin_RED}error layar : {pryoraty} duse not exsist{prin_RESET}")
+            return None
 
     def get_layar_objs(self,layar):
         offset_objs = layar.all_game_objs
