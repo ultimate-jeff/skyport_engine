@@ -1,13 +1,3 @@
-Metadata-Version: 2.4
-Name: skyport_engine
-Version: 0.1.29
-Description-Content-Type: text/markdown
-Requires-Dist: pygame-ce>=2.5.5
-Requires-Dist: numpy>=2.3.2
-Dynamic: description
-Dynamic: description-content-type
-Dynamic: requires-dist
-
 
 made by : Matthew R and William L
 

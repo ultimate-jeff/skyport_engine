@@ -148,7 +148,8 @@ class Display_manager:
         except Exception as e:
             loger.log(f"error in event handeling: {e}")
 
-class GSTI: # GSTI stands for: Game State Config Interpriter
+class GSTI:
+    lloader = loader# GSTI stands for: Game State Config Interpriter
     def help():
         print("""
         example placement map
@@ -184,11 +185,12 @@ class GSTI: # GSTI stands for: Game State Config Interpriter
           ]
         }
         """)
-    def __init__(self,fp,lm:"Layar_manager"):
+    def __init__(self,fp,lm:"Layar_manager",layar_pryoraty=0):
         """u pass in a placement map and it will automaticly place all objs in the map"""
         self.lm = lm
         self.fp = fp
-        self.data = loader.data(fp)
+        self.layar_pryoraty = layar_pryoraty
+        self.data = GSTI.lloader.data(fp)
         #self.load_placements()
 
     def load_placements(self):
@@ -245,7 +247,7 @@ class GSTI: # GSTI stands for: Game State Config Interpriter
 
     def _add(self,all_objs):
         for obj in all_objs:
-            self.lm.add_obj(obj,0)
+            self.lm.add_obj(obj,self.layar_pryoraty)
 
 
     def _create_obj_declaration(self,obj):
