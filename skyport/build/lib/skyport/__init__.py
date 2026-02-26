@@ -111,7 +111,7 @@ if BASE_DIR not in sys.path:
 from .rendering_eng import (Display_manager,GSTI)
 
 from .global_utils import (
-    Delta_timer, Util, Loader, r_obj, Sprite,util,loger
+    Delta_timer, Util, Loader, r_obj, Sprite,loger
 )
 from .core.paths import pygame
 
@@ -139,8 +139,11 @@ prin_SALMON = '\033[38;5;209m'
 prin_DARK_GREEN = '\033[38;5;22m'
 
 from .assets.layar_manager import Layar_manager
-from .assets.layar_manager import Camera
+from .assets.layar_manager import Camera 
 from .gf_map_cunstructor import gen_map
+
+from .assets.layar_manager import Camera as Layar
+from .global_utils import r_obj as Render
 
 def init(game_loader):
     r_obj.loader = game_loader

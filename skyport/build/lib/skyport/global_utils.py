@@ -72,6 +72,11 @@ class Util:
     def sort_objects_by_attr(self,obj_list : list, attr_name : str, reverse=False):
         return sorted(obj_list, key=lambda x: getattr(x, attr_name), reverse=reverse)
 
+    def snap_cords_in_bounds(self,x,y,max_x,max_y,min_x=0,min_y=0):
+        new_x = min(max(x,min_x),max_x-1)
+        new_y = min(max(y,min_y),max_y-1)
+        return new_x,new_y
+
 class Loader:
     loader_instanses = 0
     lutil = Util()
@@ -82,6 +87,7 @@ class Loader:
         self.texture_map = {}
         self.file_map = {}
         self.sound_map = {}
+        self.baned_paths = []
         if texture_map_path != None:
             self.load_texture_map(texture_map_path)
         if GF_map_path != None:
@@ -97,6 +103,10 @@ class Loader:
 
     def _error(self,Type,error,path):
         error_msg = f"{prin_RED}!!-error loading {Type} : {path} ->> in loader {self.loader_name} with error >> {error} -!!{prin_RESET}"
+        loger.log(error_msg)
+        print(error_msg)
+    def _main_error(self,msg,error):
+        error_msg = f"{prin_RED}!!-error {msg} with error >> {error} -!!{prin_RESET}"
         loger.log(error_msg)
         print(error_msg)
 
@@ -197,34 +207,57 @@ class Loader:
             sound_map = json.load(file)
         self.sound_map = self._init_sound_map(sound_map)
 
-    def image(self,path):
+    def image(self,path,load_item_to_map=True):
         try:
             return self.texture_map[path]["value"]
         except KeyError:
             try:
-                return pygame.image.load(self.lutil.fp(path)).convert_alpha()
+                image = pygame.image.load(self.lutil.fp(path)).convert_alpha()
+                if load_item_to_map and path not in self.baned_paths:
+                    self.texture_map[path] = {"type":'d',"value":image}
+                return image
             except Exception as e:
                 self._error("image",e,path)
                 return self.error_assets["img"]
-    def data(self,file_path):
+    def data(self,file_path,load_item_to_map=True):
         try:
             return self.file_map[file_path]["value"]
         except KeyError:
             try:
                 with open(self.lutil.fp(file_path),"r") as file:
-                    return json.load(file)
+                    data = json.load(file)
+                if load_item_to_map and file_path not in self.baned_paths:
+                    self.file_map[file_path] = {"type":"d","value":data}
+                return data
             except Exception as e:
                 self._error("data",e,file_path)
                 return -1
-    def sound(self,file_path):
+    def sound(self,file_path,load_item_to_map=True):
         try:
             return self.sound_map[file_path]["value"]
         except KeyError:
             try:
-                return pygame.mixer.Sound(self.lutil.fp(file_path))
+                sound = pygame.mixer.Sound(self.lutil.fp(file_path))
+                if load_item_to_map and file_path not in self.baned_paths:
+                    self.sound_map[file_path] = {"type":"d","value":sound}
+                return sound
             except Exception as e:
                 self._error("sound",e,file_path)
                 return self.error_assets["sound"]
+
+    def remove_file(self,path,map):
+        """this removes a file from the memory map in this loader instance"""
+        try:
+            del map[path]
+            self.baned_paths.append(path)
+        except Exception as e:
+            self._main_error(f"an error has happend while trying to remove {path} from map",e)
+    def unban_path(self,path):
+        """this unbans a path so it can be loaded again and added to the map if it is not already in the map"""
+        try:
+            self.baned_paths.remove(path)
+        except Exception as e:
+            self._main_error(f"an error has happend while trying to unban {path}",e)
 
     def warp_image(self,image,sizex,sizey,angle):
         image1 = pygame.transform.scale(image,(sizex,sizey))
@@ -245,6 +278,32 @@ class Loader:
             return 1
         except Exception as e:
             print(f" error >> {e} from loader >> {self.loader_name} ")
+    def play_sound_from_point(self,pf,sound_pos,listener_pos,volume=0.5,loops=0,distance_fade=0.5):
+        """this playes a sound from a point"""
+        max_vol = volume
+        dist = math.hypot(sound_pos[0] - listener_pos[0], sound_pos[1] - listener_pos[1])
+        volume *= max(0, 1 - dist / distance_fade)
+        self.play_sound(pf, volume, loops)
+
+    def join_maps(self,map_a,map_b):
+        """this method takes one map and adds all ots content to the other"""
+        for k in map_b.keys():
+            item = map_b[k]
+            map_a[k] = item
+        return map_a
+    def rename_elament(self,path,new_name,mapp):
+        try:
+            item = mapp.pop(path)
+            mapp[new_name] = item
+        except Exception as e:
+            self._main_error("path duse not exsist in map",e)
+    def save_map(self,fp,name,mapp):
+        """the name must include the .json part and the fp must already exsist (this has not been tested)"""
+        try:
+            with open(os.path.join(fp,name),"w") as f:
+                json.dump(mapp,f,indent=4)
+        except Exception as e:
+            self._main_error(f"an error has happend while trying to save a map named {name} to {fp}",e)
 
 class Delta_timer:
     def __init__(self):
@@ -274,6 +333,7 @@ class Sprite:
     instanses = 0
     ld = loader
     def __init__(self,file_path,game_fps):
+        """this is for animation (it has not been tested as of this version)"""
         self.dt = Delta_timer()
         Sprite.instanses += 1
         self.bace_path = file_path # bace path would be something like assets/sprites/test1.sptite
@@ -286,7 +346,7 @@ class Sprite:
         self.scaled_imgs = []
         self.elapsed_time = 0.0
         self._last_zoom = None
-        self.init_imgs(file_path)
+        self._init_imgs(file_path)
 
     def get_frame_index(self, dt):
         self.elapsed_time += dt
@@ -296,12 +356,13 @@ class Sprite:
 
     def get_surf(self,zoom,angle):
         if self._last_zoom != zoom:
-            self.scale_all(zoom)
+            self._scale_all(zoom)
         ind = self.get_frame_index(self.dt.get_dt())
         surf = self.scaled_imgs[ind]
         surf = pygame.transform.rotate(surf,angle)
+        return surf
 
-    def scale_all(self,zoom):
+    def _scale_all(self,zoom):
         surf = pygame.surface.Surface((10,10))
         surf.get_size()
         self.scaled_imgs.clear()
@@ -313,7 +374,7 @@ class Sprite:
             surf = pygame.transform.scale(surf,surf_size)
             self.scaled_imgs.append(surf)
 
-    def init_imgs(self,FP):
+    def _init_imgs(self,FP):
         self._imgs = Sprite.ld.image(FP)
 
     def manual_init_imgs(self,FP):
@@ -339,8 +400,8 @@ class r_obj:
         self.render_type = render_type
 
         self.init_bound_objs_realative_cords()
-        self.init_render_type(texture_fp)
-        self.OG_IMAGE = self.get_df_img(texture_fp)
+        self._init_render_type(texture_fp)
+        self.OG_IMAGE = self._get_df_img(texture_fp)
         self.surf = self.get_surf(zoom)
         self.rect = self.surf.get_rect()
 
@@ -350,19 +411,19 @@ class r_obj:
             self.hitbox_rect = pygame.Rect(x,y,sx,sy)
         loger.log(f"r_obj instans {self.id} inisalized at position ({self.x},{self.y}) with size ({self.sx},{self.sy})")
 
-    def init_render_type(self,fp):
+    def _init_render_type(self,fp):
         if fp != None:
             file_extension = os.path.splitext(fp)[1]
             if file_extension == "sprite":
-                self.render_method = self.sprite_render
+                self.render_method = self._sprite_render
                 return
-            self.render_method = self.render
+            self.render_method = self._render
             return
         else:
-             self.render_method = self.render
+             self.render_method = self._render
              return
 
-    def get_df_img(self,fp):
+    def _get_df_img(self,fp):
         if fp == None:
             return loader.image("assets/images/error.png")
         return self.image(fp)
@@ -371,29 +432,30 @@ class r_obj:
         return r_obj.loader.image(fp)
     def file(self,fp):
         return r_obj.loader.data(fp)
-
-    def get_img(self,zoom):
+    def get_og_img(self,zoom):
         return self.OG_IMAGE
     def get_scaled_img(self,zoom,angle):
         return self.scaled_surf
 
     def should_scale(self,zoom):
+        """this returns True if this obj ever needs to scale it img"""
         if self.last_zoom != zoom:
             self.last_zoom = zoom
             return True
         return False
 
     def should_rotate(self,angle):
+        "this returns True if this obj ever rotates"
         if angle != self.last_angle:
             self.last_angle = angle
             return True
         return False
 
-    def sprite_render(self,zoom):
+    def _sprite_render(self,zoom):
         img = self.OG_IMAGE.get_surf(zoom,self.angle)
         return img
 
-    def render(self,zoom):
+    def _render(self,zoom):
         if self.should_scale(zoom):
             self.scaled_surf = pygame.transform.scale(self.OG_IMAGE,(self.sx * zoom , self.sy * zoom))
             self.surf = pygame.transform.rotate(self.scaled_surf,self.angle)

@@ -15,7 +15,7 @@ from skyport.global_utils import (
 
 class Camera:
     instances = 0
-    def __init__(self, display_surface, chunk_size,world_size,bg_fill_color=None,pryoraty=None,chunk_genorator_func=None):
+    def __init__(self, display_surface, chunk_size:"int",world_size:"tuple",bg_fill_color:"tuple"=None,pryoraty:"int"=None,chunk_genorator_func=None):
         self.tiles = {}
         self.all_game_objs = []
         self._qued_game_objs = []
@@ -50,7 +50,7 @@ class Camera:
         chunk = self.get_chunk(c_pos[0], c_pos[1])
         chunk.all_objs.append(obj)
 
-    def re_chunk(self,all_objs,obj):
+    def _re_chunk(self,all_objs,obj):
         all_objs.remove(obj)
         self.chunkify(obj)
 
@@ -58,7 +58,6 @@ class Camera:
         cx = int(x) // self.chunk_size
         cy = int(y) // self.chunk_size
         return (cx,cy)
-
     def get_chunk(self,cx, cy):
         #return chunk at (cx, cy), create if it doesnt exist yet
         if (cx, cy) not in self.tiles:
@@ -66,7 +65,20 @@ class Camera:
             Util.print(f"{prin_GREEN}Created chunk {cx},{cy}{prin_RESET}")
         return self.tiles[(cx, cy)]
 
-    def tick_ops(self):
+    def get_obj_coliding_with_point(self,x,y):
+        """returns all objs a point is coliding with on this layar"""
+        c_pos = self.get_chunk_cords(x,y)
+        chunk = self.get_chunk(c_pos[0], c_pos[1])
+        colliding = []
+        for obj in chunk.all_objs:
+            if obj.rect.collidepoint(x,y):
+                colliding.append(obj)
+        for obj in self.all_game_objs:
+            if obj.rect.collidepoint(x,y):
+                colliding.append(obj)
+        return colliding
+
+    def _tick_ops(self):
         if self.print_queue != "":
             Util.print(self.print_queue)
         self.print_queue = ""
@@ -74,7 +86,7 @@ class Camera:
     def set_zoom(self, level):
         self.zoom = max(0.1, level)
 
-    def get_min_max_c_pos(self,z,W,H):
+    def _get_min_max_c_pos(self,z,W,H):
         world_left   = -self.offset_x / z
         world_top    = -self.offset_y / z
         world_right  = world_left + W / z
@@ -93,7 +105,7 @@ class Camera:
         self.offset_x = -target_x * z + W // 2
         self.offset_y = -target_y * z + H // 2
 
-        min_cx,min_cy,max_cx,max_cy = self.get_min_max_c_pos(z,W,H)
+        min_cx,min_cy,max_cx,max_cy = self._get_min_max_c_pos(z,W,H)
 
         for cx in range(min_cx, max_cx + 1):
             for cy in range(min_cy, max_cy + 1):
@@ -104,7 +116,7 @@ class Camera:
                 self.display_surface.blit(surf, (screen_x, screen_y))
                 chunk.update(self.zoom,self,screen_x,screen_y)
         self.display_surface.blit(self.obj_render_surf,(0,0))
-        self.tick_ops()
+        self._tick_ops()
 
     def get_surf(self):
         return self.display_surface

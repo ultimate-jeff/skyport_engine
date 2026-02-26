@@ -44,6 +44,7 @@ class Display_manager:
     def __init__(self,window_size,display_size,force_full_screen=True,window_name="spyport engine window",window_ico=None,resizable=True):
         self.loops = 0
         self.print_rate = 8
+        self.print_engine_data = True
         #self.win = Window("skyport engine window--", size=window_size)
         self.running = True
         self.window_ico = window_ico
@@ -85,8 +86,8 @@ class Display_manager:
     def _cclock(self,TFPS):
         #self._event()
         self.loops += 1
-        self.s_display = pygame.transform.scale(self.display, self.new_size)
-        self.window.blit(self.s_display,self.W_pos)
+        self.s_display = pygame.transform.scale(self.display, self._new_size)
+        self.window.blit(self.s_display,self._W_pos)
         Util.print(f"loops are at {self.loops} and fps is at {self.clock.get_fps():.2f}")
         pygame.display.flip()
         self.clock.tick(TFPS)
@@ -96,15 +97,15 @@ class Display_manager:
         self.window_width = self.window.get_width()
         self.window_height = self.window.get_height()
         self._scale = min(self.window_width / self.display.get_width(), self.window_height / self.display.get_height())
-        self.new_size = (int(self.display.get_width() * self._scale), int(self.display.get_height() * self._scale))
-        self.W_pos = ((self.window_width - self.new_size[0]) // 2, (self.window_height - self.new_size[1]) // 2)
+        self._new_size = (int(self.display.get_width() * self._scale), int(self.display.get_height() * self._scale))
+        self._W_pos = ((self.window_width - self._new_size[0]) // 2, (self.window_height - self._new_size[1]) // 2)
 
         self.center_x = self.display.get_width() / 2
         self.center_y = self.display.get_height() / 2
     
     def get_mouse_pos(self):
         mx, my = pygame.mouse.get_pos()
-        self,mouse_pos = (((mx - self.W_pos[0]) / self._scale),((my - self.W_pos[1]) / self._scale))
+        self,mouse_pos = (((mx - self._W_pos[0]) / self._scale),((my - self._W_pos[1]) / self._scale))
 
     def _render(self):
         self.display.blit(self.game_states[self.curent_game_state].render(),(0,0))
@@ -133,7 +134,7 @@ class Display_manager:
         loger.log("Rendering thread stopped")
         loger.save()
     def event(self):
-        if self.loops % self.print_rate == 0:
+        if self.loops % self.print_rate == 0 and self.print_engine_data:
             Util.output_print_data()
         try:
             events = pygame.event.get()
