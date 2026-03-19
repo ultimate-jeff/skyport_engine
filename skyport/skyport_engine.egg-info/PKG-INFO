@@ -1,9 +1,13 @@
 Metadata-Version: 2.4
 Name: skyport_engine
-Version: 0.1.32
+Version: 0.1.33
+Author: Matthew R
+Author-email: matthew.le.robins@gmail.com
 Description-Content-Type: text/markdown
 Requires-Dist: pygame-ce>=2.5.5
 Requires-Dist: numpy>=2.3.2
+Dynamic: author
+Dynamic: author-email
 Dynamic: description
 Dynamic: description-content-type
 Dynamic: requires-dist
@@ -14,18 +18,31 @@ made by : Matthew R and William L
 ////////////////////////////
 -----welcome to skyport-----
 ////////////////////////////
-v0.1.32(unstable)
+v0.1.33(unstable)
 
     the purpos of skyport is to:
-provide a simpler way to make a 2d game with pygame without having to learn how to use pygame itself.
+is to be a 2d game engine making pygame-ce dev easer 
+
+skyport-engine has some fetchers such as
+    - automatically handling window management on a separate thread 
+    - rendering objects with automatic image scaling and rotation
+    - movable layer system with zoom and camera movement capabilities and will automatically scale surfs blit ed to the layers chunk surface 
+    - file loader for pre loading or on fly loading of files 
+    - a utility class with some random and potentially useful methods 
+    - a animated texture system (although untested)
+    - and a loger
+
+
+
+# engine data:
 
 engine classes:
 - Display_manager: main display manager class
-- Delta_timer: delta time couculator
+- Delta_timer: delta time calculator
 - Util: utility functions
 - Layar_manager: manager for multiple layers (cameras)
 - Camera: layer (camera) class (this can also be caled Layar)
-- r_obj: renderable object class (this also can be caled Render)
+- r_obj: render-able object class (this also can be caled Render)
 - Loader: asset loader class
 - loger: logging utility
 - Sprite: animated texture class
@@ -121,9 +138,7 @@ class Display_manager:
 - event() this method contains the event handler for the engine/window 
 important atrabutes:
 - .print_engine_data :this is a bool that if by defalt is True and if True then the engine will print data like the fps to consle,
-- .print_rate :this is how many ticks the engine can attempt to print engine data,
-- .fps : this is the engine target fps,
-- 
+- .print_rate :this is how many ticks the engine can attempt to print engine data 
     LINKS:
     gamestates: a gamestate is a layarmanager which holds all the layars and objs of that gamestate and only the 
         active gamestate is renderd 

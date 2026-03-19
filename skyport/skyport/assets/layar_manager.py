@@ -15,7 +15,7 @@ from skyport.global_utils import (
 
 class Camera:
     instances = 0
-    def __init__(self, display_surface, chunk_size:"int",world_size:"tuple",bg_fill_color:"tuple"=None,pryoraty:"int"=None,chunk_genorator_func=None):
+    def __init__(self, display_surface, chunk_size:"int",world_size:"tuple",bg_fill_color:"tuple"=None,pryoraty:"int"=None,chunk_genorator_func=None,update_func=None):
         self.tiles = {}
         self.all_game_objs = []
         self._qued_game_objs = []
@@ -32,6 +32,7 @@ class Camera:
         self.CHUNKS_ON_Y = self.WORLD_HIGHT // self.chunk_size
         self.print_queue = ""
         self.genorator = chunk_genorator_func
+        self.update_func = update_func
         Camera.instances += 1
         self.pryoraty = util.pryoraty(pryoraty,Camera.instances)
         self.bg_fill_color = bg_fill_color
@@ -131,18 +132,18 @@ class Camera:
 
 class Chunk:
     instances = 0
-    def __init__(self, cx, cy, chunk_size ,bg_fill_color=None,genorator=None,zoom=0,cam=None):
+    def __init__(self, cx, cy, chunk_size ,bg_fill_color=None,genorator=None,zoom=0,update_func=None,cam=None):
         self.cx = cx
         self.cy = cy
         self.size = chunk_size
         self.surf = pygame.Surface((chunk_size, chunk_size), flags=pygame.SRCALPHA)
-        self.surf.fill((0, 0, 0))
+        self.surf.fill((0, 0, 0,0))
         self._scaled = None
         self._last_zoom = None
         self.tags = {}
         self.all_objs = []
         self.bg_surf = None
-        self.update_gen_script = None
+        self.update_gen_script = update_func
         self.generate_terrain(genorator)
         self.bg_fill_color = bg_fill_color
         #self.update(zoom,cam,)
@@ -169,6 +170,11 @@ class Chunk:
         if genorator != None:
             genorator(self)
 
+    def blit(self,surf,x,y):
+        self.surf.blit(surf,(x,y))
+    def fill(self,fill_color):
+        self.surf.fill(fill_color)
+
     def blit_objs_v2(self,zoom,cam,chunk_screen_x,chunk_screen_y):
         for obj in self.all_objs: # requierd atributes of rendering obj is .get_surf, .x ,.og_x , .y ,.og_y
             surf = obj.get_surf(zoom)
@@ -180,7 +186,7 @@ class Chunk:
             if abs(obj.x - obj.og_x) >= self.size or abs(obj.y - obj.og_y) >= self.size: # rechunking 
                 cam.print_queue += f"obj {obj.id} is at {obj.x},{obj.y} and beeing rechunked\n"
                 obj.og_x,obj.og_y = obj.x,obj.y
-                cam.re_chunk(self.all_objs,obj)
+                cam._re_chunk(self.all_objs,obj)
 
     def update(self,zoom,cam,screen_x,screen_y):
         if self.bg_fill_color != None:
@@ -189,6 +195,98 @@ class Chunk:
             self.update_gen_script(self)
         self.blit_objs_v2(zoom,cam,screen_x,screen_y)
         #self.scale__(zoom)
+
+class Layar:
+    def __init__(self,display_surface,world_size:"tuple",chunk_size:"int"=500,bg_fill_color:"tuple"=None,pryoraty:"int"=None):
+        self.display = display_surface
+        self.world_size = world_size
+        self.bg_fill_color = util.pryoraty(bg_fill_color,(0,0,0,0))
+        Camera.instances += 1
+        self.pryoraty = util.pryoraty(pryoraty,Camera.instances)
+        self.chunk_size = chunk_size
+        self.x,self.y = 0
+        self.tiles = {}
+        self.zoom = 1.0
+        self.old_zoom = self.zoom
+        self.WORLD_HIGHT = world_size[0]
+        self.WORLD_WIDTH = world_size[1]
+        self.CHUNKS_ON_X = self.WORLD_WIDTH // self.chunk_size
+        self.CHUNKS_ON_Y = self.WORLD_HIGHT // self.chunk_size
+        self.obj_render_surf = pygame.Surface(display_surface.get_size(),flags=pygame.SRCALPHA)
+
+    def _get_min_max_c_pos(self,z,W,H):
+        world_left   = -self._offset_x / z
+        world_top    = -self._offset_y / z
+        world_right  = world_left + W / z
+        world_bottom = world_top + H / z
+
+        min_cx = max(0, int(math.floor(world_left / self.chunk_size)))
+        max_cx = min(self.CHUNKS_ON_X - 1, int(math.floor(world_right / self.chunk_size)))
+        min_cy = max(0, int(math.floor(world_top / self.chunk_size)))
+        max_cy = min(self.CHUNKS_ON_Y - 1, int(math.floor(world_bottom / self.chunk_size)))
+        return min_cx,min_cy,max_cx,max_cy
+
+    def render(self, target_x, target_y):
+        W, H = self.display.get_size()
+        z = self.zoom
+        self.obj_render_surf.fill((0,0,0,0))
+        self._offset_x = -target_x * z + W // 2
+        self._offset_y = -target_y * z + H // 2
+
+        min_cx,min_cy,max_cx,max_cy = self._get_min_max_c_pos(z,W,H)
+
+        for cx in range(min_cx, max_cx + 1):
+            for cy in range(min_cy, max_cy + 1):
+                chunk = self.get_chunk(cx, cy)
+                screen_x = cx * self.chunk_size * z + self._offset_x
+                screen_y = cy * self.chunk_size * z + self._offset_y
+                surf = chunk.scaled_surface(z)
+                self.display.blit(surf, (screen_x, screen_y))
+                chunk.update(self.zoom,self,screen_x,screen_y)
+        self.display.blit(self.obj_render_surf,(0,0))
+
+    def get_chunk_cords(self,x,y):
+        cx = int(x) // self.chunk_size
+        cy = int(y) // self.chunk_size
+        return (cx,cy)
+
+    def get_chunk(self,cx, cy):
+        #return chunk at (cx, cy), create if it doesnt exist yet
+        if (cx, cy) not in self.tiles:
+            self.tiles[(cx, cy)] = Chunk(cx, cy, self.chunk_size,genorator=self.genorator,bg_fill_color=self.bg_fill_color,zoom=self.zoom,cam=self)
+            Util.print(f"{prin_GREEN}Created chunk {cx},{cy}{prin_RESET}")
+        return self.tiles[(cx, cy)]
+
+    def set_pos(self,x,y):
+        self.x = x
+        self.y = y
+
+    def get_surf(self):
+        return self.display_surface
+
+    def blit(self,surf:"pygame.surface.Surface",x,y):
+        rect = surf.get_rect()
+        chunks_on_x = math.ceil(rect.width() / self.chunk_size)
+        chunks_on_y = math.ceil(rect.height() / self.chunk_size)
+        for Y in range(chunks_on_y):
+            for X in range(chunks_on_x):
+                Y = (Y * self.chunk_size) + y
+                X = (X * self.chunk_size) + y
+                cx,cy = self.get_chunk_cords(X,Y)
+                chunk = self.get_chunk(cx,cy)
+                chunk.blit(surf,x,y)
+
+
+
+    def fill(self,fill_color):
+        for cpos in self.tiles.keys():
+            self.get_chunk(cpos[0],cpos[1]).fill(fill_color)
+    def chunk_fill(self,cx,cy,fill_color):
+        chunk = self.get_chunk(cx,cy)
+        chunk.full(fill_color)
+
+    def set_zoom(self, level):
+        self.zoom = max(0.1, level)
 
 class Layar_manager:
     instanses = 0
@@ -239,17 +337,17 @@ class Layar_manager:
     def get_layar_objs(self,layar):
         offset_objs = layar.all_game_objs
         chunk_objs = {}
-        for pos in layar.tiles.key():
+        for pos in layar.tiles.keys():
             chunk = layar.tiles[pos]
             c_obj = chunk.all_objs
             chunk_objs[pos] = c_obj
         return chunk_objs,offset_objs
 
     def set_layar_objs(self,chunk_objs,offset_objs,layar):
-        layar.all_game_objs + offset_objs
-        for pos in layar.tiles.key():
+        layar.all_game_objs += offset_objs
+        for pos in layar.tiles.keys():
             chunk = layar.tiles[pos]
-            chunk.all_objs + chunk_objs[pos]
+            chunk.all_objs += chunk_objs[pos]
         return layar
 
     def add_obj(self,obj,layar_pryoraty):

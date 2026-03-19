@@ -140,9 +140,10 @@ prin_DARK_GREEN = '\033[38;5;22m'
 
 from .assets.layar_manager import Layar_manager
 from .assets.layar_manager import Camera 
+from .assets.layar_manager import Layar
 from .gf_map_cunstructor import gen_map
 
-from .assets.layar_manager import Camera as Layar
+#from .assets.layar_manager import Camera as Layar
 from .global_utils import r_obj as Render
 
 def init(game_loader):

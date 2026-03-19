@@ -4,18 +4,31 @@ made by : Matthew R and William L
 ////////////////////////////
 -----welcome to skyport-----
 ////////////////////////////
-v0.1.32(unstable)
+v0.1.33(unstable)
 
     the purpos of skyport is to:
-provide a simpler way to make a 2d game with pygame without having to learn how to use pygame itself.
+is to be a 2d game engine making pygame-ce dev easer 
+
+skyport-engine has some fetchers such as
+    - automatically handling window management on a separate thread 
+    - rendering objects with automatic image scaling and rotation
+    - movable layer system with zoom and camera movement capabilities and will automatically scale surfs blit ed to the layers chunk surface 
+    - file loader for pre loading or on fly loading of files 
+    - a utility class with some random and potentially useful methods 
+    - a animated texture system (although untested)
+    - and a loger
+
+
+
+# engine data:
 
 engine classes:
 - Display_manager: main display manager class
-- Delta_timer: delta time couculator
+- Delta_timer: delta time calculator
 - Util: utility functions
 - Layar_manager: manager for multiple layers (cameras)
 - Camera: layer (camera) class (this can also be caled Layar)
-- r_obj: renderable object class (this also can be caled Render)
+- r_obj: render-able object class (this also can be caled Render)
 - Loader: asset loader class
 - loger: logging utility
 - Sprite: animated texture class

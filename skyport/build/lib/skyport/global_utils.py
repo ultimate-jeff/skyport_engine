@@ -248,8 +248,8 @@ class Loader:
     def remove_file(self,path,map):
         """this removes a file from the memory map in this loader instance"""
         try:
-            del map[path]
             self.baned_paths.append(path)
+            del map[path]
         except Exception as e:
             self._main_error(f"an error has happend while trying to remove {path} from map",e)
     def unban_path(self,path):
@@ -321,6 +321,7 @@ prin_RED = '\033[91m'
 prin_GREEN = '\033[92m'
 prin_BLUE = '\033[94m'
 prin_RESET = '\033[0m'
+prin_ORANGE = '\033[38;5;208m'
 util = Util()
 loader = Loader(
     "assets/loader/texture_maps/engine_textures.json",

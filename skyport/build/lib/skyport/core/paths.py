@@ -18,17 +18,21 @@ class PathUtil:
 
 class ENG_Loger:
     ENGINE_LOG_PATH = PathUtil.fp("logs/engine_logs.json")
-    if not os.path.exists(ENGINE_LOG_PATH):
-        with open(ENGINE_LOG_PATH,"w") as f:
-            json.dump({"total_logs": 5,"record_engine_logs": True,"logs": []},indent=4)
-    with open(ENGINE_LOG_PATH,"r") as f:
-        log_file = json.load(f)
-    take_logs = log_file["record_engine_logs"]
+    try:
+        if not os.path.exists(ENGINE_LOG_PATH):
+            with open(ENGINE_LOG_PATH,"w") as f:
+                json.dump({"total_logs": 5,"record_engine_logs": True,"logs": []},indent=4)
+        with open(ENGINE_LOG_PATH,"r") as f:
+            log_file = json.load(f)
+        take_logs = log_file["record_engine_logs"]
+    except Exception as e:
+        print(f"Error loading log file: {e}")
+        take_logs = False
     log_data_retaintion_amount = 5
-    print(f"--engine logging is set to {take_logs}--")
     def __init__(self):
         self.log_start_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.run_time_log = ""
+        print(f"--engine logging is set to {ENG_Loger.take_logs}--")
         if ENG_Loger.take_logs:
             self.log = self._true_log
         else:
@@ -43,8 +47,11 @@ class ENG_Loger:
         if len(ENG_Loger.log_file["logs"]) > ENG_Loger.log_data_retaintion_amount:
             ENG_Loger.log_file["logs"].pop(0)
             ENG_Loger.log_file["total_logs"] = ENG_Loger.log_data_retaintion_amount
-        with open(ENG_Loger.ENGINE_LOG_PATH,"w") as f:
-            json.dump(ENG_Loger.log_file,f,indent=4)
+        try:
+            with open(ENG_Loger.ENGINE_LOG_PATH,"w") as f:
+                json.dump(ENG_Loger.log_file,f,indent=4)
+        except Exception as e:
+            print(f"Error saving log file: {e}")
     def print(self):
         for log in ENG_Loger.log_file["logs"]:
             for line in log["run_time_log"].split("\n"):
