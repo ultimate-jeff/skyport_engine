@@ -17,8 +17,8 @@ from skyport.core.paths import pygame
 pygame.display.init()
 pygame.display.set_mode((1, 1), pygame.HIDDEN)
 
-from skyport.assets.layar_manager import Layar_manager
-from skyport.assets.layar_manager import Camera
+from .assets.layar_manager import Layer_manager
+from .assets.layar_manager import Camera
 
 from skyport.global_utils import (
     Delta_timer, Util, Loader, r_obj, Sprite, 
@@ -58,7 +58,7 @@ class Display_manager:
         self.window = pygame.display.set_mode(window_size,pygame.DOUBLEBUF | pygame.HWSURFACE | pygame.RESIZABLE)
         pygame.display.set_icon(self.window_ico) if self.window_ico else None
         pygame.display.set_caption(window_name)
-        lm = Layar_manager(self.display)
+        lm = Layer_manager(self.display)
         self.dt = Delta_timer()
         self.util = Util()
         self.print_que = ""
@@ -105,7 +105,8 @@ class Display_manager:
     
     def get_mouse_pos(self):
         mx, my = pygame.mouse.get_pos()
-        self,mouse_pos = (((mx - self._W_pos[0]) / self._scale),((my - self._W_pos[1]) / self._scale))
+        self.mouse_pos = (((mx - self._W_pos[0]) / self._scale),((my - self._W_pos[1]) / self._scale))
+        return self.mouse_pos
 
     def _render(self):
         self.display.blit(self.game_states[self.curent_game_state].render(),(0,0))
@@ -186,7 +187,7 @@ class GSTI:
           ]
         }
         """)
-    def __init__(self,fp,lm:"Layar_manager",layar_pryoraty=0):
+    def __init__(self,fp,lm:"Layer_manager",layar_pryoraty=0):
         """u pass in a placement map and it will automaticly place all objs in the map"""
         self.lm = lm
         self.fp = fp

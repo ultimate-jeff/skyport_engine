@@ -7,7 +7,7 @@ with open("README.md","r") as f:
 setup(
     name="skyport_engine",
     # version format: major version . minor version . patch version
-    version="0.1.33",
+    version="0.1.34",
     author="Matthew R",
     author_email="matthew.le.robins@gmail.com",
     include_package_data=True,
@@ -23,7 +23,10 @@ setup(
 #C:\Users\matth\OneDrive\Desktop\skyport\dist\skyport-0.1.0-py3-none-any.whl
 
 #compile with:
-# cd "C:\Users\matth\OneDrive\Desktop\skyport" && python setup.py sdist bdist_wheel
-#pip install dist\skyport_engine-0.1.33-py3-none-any.whl
+# cd "C:\Users\matth\OneDrive\Desktop\skyport"; python setup.py sdist bdist_wheel
+#pip install dist\skyport_engine-0.1.34-py3-none-any.whl
+
+
+#pip install --force-reinstall dist\skyport_engine-0.1.34-py3-none-any.whl
 
 #twine upload dist/*

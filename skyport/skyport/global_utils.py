@@ -487,3 +487,60 @@ class r_obj:
         self.hitbox_rect.topleft = (self.x,self.y)
         self.update_bound_objs()
 
+class Render:
+    instanses = 0
+    def __init__(self,pos:"tuple",size:"tuple",angle:"float",hitbox_size:"tuple",og_image:"pygame.surface.Surface",render_type="chunk",zoom=1):
+        """this is a simpler and more performance frendly way to render objs"""
+        Render.instanses += 1
+        self.id = Render.instanses
+        self.render_type = render_type
+        self.rect = pygame.Rect(pos[0],pos[1],size[0],size[1])
+        self.hitbox = pygame.Rect(pos,hitbox_size)
+        self.set_pos(pos[0],pos[1])
+        self.angle = angle
+        self.image = loader.scale_image(og_image,size[0],size[1])
+        self.og_x,self.og_y = self.x,self.y
+
+        self._scaled_image = self.image
+        self._final_image = self._scaled_image
+        self.last_zoom = None
+        self.last_angle = None
+        self.get_surf(zoom)
+
+    def _should_scale(self,zoom):
+        if self.last_zoom != zoom:
+            self.last_zoom = zoom
+            return True
+        return False
+    def _should_rotate(self,angle):
+        if angle != self.last_angle:
+            self.last_angle = angle
+            return True
+        return False
+
+    def _scale_image(self,zoom,angle):
+        if self._should_scale(zoom):
+            new_size = (int(self.image.get_width() * zoom), int(self.image.get_height() * zoom))
+            self._scaled_image = pygame.transform.scale(self.image, new_size)
+            self._rotate_image(angle)
+    def _rotate_image(self,angle):
+        if self._should_rotate(angle):
+            self._final_image = pygame.transform.rotate(self._scaled_image, angle)
+            center = self.rect.center
+            self.rect = self._final_image.get_rect(center=center)
+    def update(self,zoom,angle):
+        self._scale_image(zoom,angle)
+        self._rotate_image(angle)
+        self.x,self.y = self.rect.centerx,self.rect.centery
+
+    def get_surf(self,zoom):
+        self.update(zoom,self.angle)
+        return self._final_image
+
+    def set_pos(self,x,y,angle=None):
+        self.rect.center = (x,y)
+        self.hitbox.center = (x,y)
+        self.x = x
+        self.y = y
+        if angle != None:
+            self.angle = angle
