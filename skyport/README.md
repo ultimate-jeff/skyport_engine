@@ -4,7 +4,7 @@ made by : Matthew R and William L
 ////////////////////////////
 -----welcome to skyport-----
 ////////////////////////////
-v0.1.34(unstable)
+v0.1.35(unstable)
 
     the purpos of skyport is to:
 is to be a 2d game engine making pygame-ce dev easer 
@@ -95,12 +95,12 @@ class Loader: this class is responsable for file management of all pygame suppor
 
     WHAT IS A LOADER MAP:
         a loader map is a json format that the loader class can read for prechashing of files to memory and this is the format
-        
+        ```json
         {
             file_path:{"type":type,"value":value},
             ......
         }
-
+        ```
         type:
             there are a cuple of type and depending on the type the value will need to chainge
             TYPES:
@@ -165,7 +165,7 @@ class GSTI: this is for placement maps
         attars by having some of your own
     'm' stands for manual this placement has all the required attars
     'd' stands for default this takes a declaration but you must provide the pos
-
+    ```json
       {
         "obj_declarations": {
         "jeff": {
@@ -193,7 +193,7 @@ class GSTI: this is for placement maps
         }
         ]
     }
-
+    ```
 dev_info:
     email:matthew.le.robins+proj@gmail.com
     (plz only email if u have found a bug and a good way to fix it and plz ensure i have a way to contact you about you suggested changes or requests)
