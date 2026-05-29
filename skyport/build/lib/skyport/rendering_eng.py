@@ -134,7 +134,7 @@ class Display_manager:
             self.rendering_thread.join() 
         loger.log("Rendering thread stopped")
         loger.save()
-    def event(self):
+    def event(self): # returns pressed keys and the pygame events and also handles window resizing and quiting
         if self.loops % self.print_rate == 0 and self.print_engine_data:
             Util.output_print_data()
         try:
@@ -149,6 +149,10 @@ class Display_manager:
                     self._couculate_window_scaling()
         except Exception as e:
             loger.log(f"error in event handeling: {e}")
+            events = []
+        
+        pressed_keys = pygame.key.get_pressed()
+        return pressed_keys,events
 
 class GSTI:
     lloader = loader# GSTI stands for: Game State Config Interpriter

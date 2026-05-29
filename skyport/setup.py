@@ -19,11 +19,11 @@ setup(
     long_description=description,
     long_description_content_type="text/markdown",
     )
-#C:\Users\matth\OneDrive\Desktop\skyport
-#C:\Users\matth\OneDrive\Desktop\skyport\dist\skyport-0.1.0-py3-none-any.whl
+#C:\Users\matt\Desktop\skyport
+#C:\Users\matt\Desktop\skyport-0.1.0-py3-none-any.whl
 
 #compile with:
-# cd "C:\Users\matth\OneDrive\Desktop\skyport"; python setup.py sdist bdist_wheel
+# cd "C:\Users\matt\Desktop\skyport"; python setup.py sdist bdist_wheel
 #pip install dist\skyport_engine-0.1.34-py3-none-any.whl
 
 

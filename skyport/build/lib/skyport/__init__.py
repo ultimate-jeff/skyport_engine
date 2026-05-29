@@ -5,8 +5,6 @@ made by : Matthew R and William L
 -----welcome to skyport-----
 ////////////////////////////
 
-    the purpos of skyport is to:
-provide a simpler way to make a 2d game with pygame without having to learn how to use pygame itself.
 
 
 """
@@ -56,6 +54,7 @@ from .gf_map_cunstructor import gen_map
 #from .assets.layar_manager import Camera as Layar
 #from .global_utils import r_obj as Render
 
-def init(game_loader):
+def init(game_loader,do_engine_loging=False):
+    loger.take_logs = do_engine_loging
     r_obj.loader = game_loader
     GSTI.lloader = game_loader

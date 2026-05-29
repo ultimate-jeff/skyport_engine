@@ -32,6 +32,32 @@ skyport-engine has some fetchers such as
     - a animated texture system (although untested)
     - and a loger
 
+# boilerplate code :
+```python
+import skyport as sp
+
+loader = sp.Loader() # the loader is used for pre loading assets
+sp.init(loader,do_engine_loging=False) # some classes requier the loader to be used and this automaticly makes them use your loader
+
+display_manager = sp.Display_manager(
+    window_size=(800,600),
+    display_size=(1000,1000),
+    force_full_screen=False,
+    window_name="skyport engine demo",
+    window_ico=loader.image(path="window_ico.png",load_item_to_map=False),
+    resizable=True
+)
+
+display_manager.START_RENDERING_THREAD(fps=60)
+while(display_manager.running):
+    """
+    your code that runs every frame goes here
+    """
+    display_manager.event() # this is the event handler function
+
+
+
+```
 
 
 # engine data:

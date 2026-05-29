@@ -289,7 +289,17 @@ class Layar:
                 cx,cy = self.get_chunk_cords(X,Y)
                 chunk = self.get_chunk(cx,cy)
                 chunk.blit(surf,x,y)
-
+    def simple__blit(self,surf:"pygame.surface.Surface",x,y):
+        self.display_surface.blit(surf,(x,y))
+    def simple_chunk_blit(self,surf:"pygame.surface.Surface",x,y):
+        cx,cy = self.get_chunk_cords(x,y)
+        chunk = self.get_chunk(cx,cy)
+        chunk.blit(surf,x,y)
+    def scb(self,surf:"pygame.surface.Surface",x,y):
+        self.simple_chunk_blit(surf,x,y)
+    def simple_fill(self,fill_color):
+        self.display_surface.fill(fill_color)
+    
     def fill(self,fill_color):
         for cpos in self.tiles.keys():
             self.get_chunk(cpos[0],cpos[1]).set_fill_data(fill_color)
