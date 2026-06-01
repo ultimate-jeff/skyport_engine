@@ -1,4 +1,6 @@
 
+import functools
+
 import numpy as np
 #import pygame
 import math
@@ -76,6 +78,145 @@ class Util:
         new_x = min(max(x,min_x),max_x-1)
         new_y = min(max(y,min_y),max_y-1)
         return new_x,new_y
+
+
+class Vector():
+    vector_count = 0
+    def __init__(self,x:"float",y:"float",**kwargs):
+        self.x = x
+        self.y = y
+        self.dx,self.dy = 0,0
+        if kwargs.keys().__contains__("angle") and kwargs.keys().__contains__("speed"):
+            self.dx,self.dy = self.couculate_dx_dy(kwargs["speed"],kwargs["angle"])
+        elif kwargs.keys().__contains__("dx") and kwargs.keys().__contains__("dy"):
+            self.dx,self.dy = kwargs["dx"],kwargs["dy"]
+
+        self.id = kwargs.get("name",f"vector_{Vector.vector_count}")
+        Vector.vector_count += 1
+
+    def couculate_dx_dy(self,speed,angle):
+        dx = speed * math.cos(angle)
+        dy = speed * math.sin(angle)
+        return dx,dy
+    def couculate_angle_speed(self,dx,dy):
+        speed = math.sqrt(dx**2 + dy**2)
+        angle = math.atan2(dy,dx)
+        return angle,speed
+    def update_pos(self,time_=1):
+        self.x += self.dx * time_
+        self.y += self.dy * time_
+    def add_vector(self,vector:"Vector"):
+        self.dx += vector.dx
+        self.dy += vector.dy
+    def sub_vector(self,vector:"Vector"):
+        self.dx -= vector.dx
+        self.dy -= vector.dy
+    def print_data(self):
+        print(f"vector: {self.id} has : pos:({self.x},{self.y}) ,(dx,dy):{self.dx},{self.dy}")
+
+    # getters and setters
+    def get_pos_prejection(self,time_=1):
+        return self.dx*time_,self.dy*time_
+    def get_pos(self):
+        return self.x,self.y
+    def get_angle_speed(self):
+        return self.couculate_angle_speed(self.dx,self.dy)
+    def set_pos(self,x,y):
+        self.x,self.y = x,y
+    def set_dx_dy(self,dx,dy):
+        self.dx,self.dy = dx,dy
+    def set_dx_dy_updated(self,dx,dy,time_=1):
+        self.update_pos(time_)
+        self.dx,self.dy = dx,dy
+
+class Interactor:
+    interactor_count = 0
+    intoractors = []
+
+    def timer(self,func):
+        @functools.wraps(func)
+        def wrapper(*args,**kwargs):
+            self.end_time = time.time()
+            self.dt = self.end_time - self.start_time
+            result = func(*args,**kwargs)
+            self.start_time = time.time()
+            return result
+        return wrapper
+    def updator(self,func):
+        @functools.wraps(func)
+        def wrapper(*args,**kwargs):
+            self.vector.update_pos(self.dt)
+            self.hitbox.center = (self.vector.x,self.vector.y)
+            result = func(*args,**kwargs)
+            return result
+        return self.timer(wrapper)
+    def add_to_built_in_list(self):
+        Interactor.intoractors.append(self)
+
+    def update(self):
+        self.vector.update_pos(self.dt)
+        self.hitbox.center = (self.vector.x,self.vector.y)
+
+    def get_pos(self):
+        return self.vector.get_pos_prejection(self.dt)
+
+    def set_pos(self,x,y):
+        self.vector.set_pos(x,y)
+        self.hitbox.center = (x,y)
+    
+    def set_angle_speed(self,angle,speed):
+        self.vector.set_dx_dy(*self.vector.couculate_dx_dy(speed,angle))
+        self.angle,self.speed = angle,speed
+    def get_angle_speed(self):
+        return self.angle,self.speed
+    
+    def add_vector(self,vector:"Vector"):
+        self.vector.add_vector(vector)
+        self.angle,self.speed = self.vector.get_angle_speed()
+    def sub_vector(self,vector:"Vector"):
+        self.vector.sub_vector(vector)
+        self.angle,self.speed = self.vector.get_angle_speed()
+
+    def check_colision(self,other:"Interactor"): # this updates bolth objs then checks for colisions
+        value = False
+        self.update()
+        other.update()
+        value = self.hitbox.colliderect(other.hitbox)
+        return value
+    def check_colisions(self,others:"list[Interactor]"): # this updates all objs then checks for colisions
+        value = []
+        self.update()
+        for other in others:
+            other.update()
+            if self.hitbox.colliderect(other.hitbox):
+                value.append(other)
+        return value
+    def check_colisions_with_vectors(self,others:"list[Vector]"):
+        value = []
+        self.update()
+        for other in others:
+            if self.hitbox.collidepoint(other.get_pos_prejection(other.dt)):
+                value.append(other)
+        return value
+
+    def __post_init_wrap(self):
+        self.get_pos = self.timer(self.get_pos)
+        self.set_pos = self.updator(self.set_pos)
+        self.set_angle_speed = self.updator(self.set_angle_speed)
+        self.add_vector = self.updator(self.add_vector)
+        self.sub_vector = self.updator(self.sub_vector)
+        self.update = self.timer(self.update)
+
+    def __init__(self,vector:"Vector",hitbox:"pygame.Rect",**kwargs):
+        self.vector = vector
+        self.hitbox = hitbox
+        self.angle,self.speed = vector.get_angle_speed()
+        self.start_time = time.time()
+        self.dt = 0
+        self.id = kwargs.get("name",f"interactor_{Interactor.interactor_count}")
+        Interactor.interactor_count += 1
+        self.__post_init_wrap()
+
 
 class Loader:
     loader_instanses = 0
@@ -206,6 +347,24 @@ class Loader:
         with open(map_path,"r") as file:
             sound_map = json.load(file)
         self.sound_map = self._init_sound_map(sound_map)
+
+    def get_path(self,path):
+        if path in self.texture_map:
+            return self.texture_map[path]["value"]
+        elif path in self.file_map:
+            return self.file_map[path]["value"]
+        elif path in self.sound_map:
+            return self.sound_map[path]["value"]
+        else:
+            self._main_error(f"path {path} not found in any map",None)
+            return None 
+
+    def create_alias(self,existing_path:"str",new_path:"str",map:"dict"):
+        try:
+            item = map[existing_path]
+            map[new_path] = item
+        except Exception as e:
+            self._main_error(f"an error has happend while trying to create an alias from {existing_path} to {new_path} in map",e)
 
     def image(self,path,load_item_to_map=True):
         try:

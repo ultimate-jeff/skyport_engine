@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: skyport_engine
-Version: 0.1.36
+Version: 0.1.37
 Author: Matthew R
 Author-email: matthew.le.robins@gmail.com
 Description-Content-Type: text/markdown
@@ -18,10 +18,10 @@ made by : Matthew R and William L
 ////////////////////////////
 -----welcome to skyport-----
 ////////////////////////////
-v0.1.35(unstable)
+v0.1.37(unstable)
 
     the purpos of skyport is to:
-is to be a 2d game engine making pygame-ce dev easer 
+is to be a game engine that automaticly takes care of rendering loop , file pre loading and having a few usful utilaty tools
 
 skyport-engine has some fetchers such as
     - automatically handling window management on a separate thread 
@@ -31,6 +31,7 @@ skyport-engine has some fetchers such as
     - a utility class with some random and potentially useful methods 
     - a animated texture system (although untested)
     - and a loger
+    - and vector and hitbox system for objects (although untested and not used by the r_obj)
 
 # boilerplate code :
 ```python
@@ -95,6 +96,7 @@ class Loader: this class is responsable for file management of all pygame suppor
     NOTE: the next 3 methods all return stuff loaded and precached by pygame and json loaders,
 - image(path): this returns the image at the path,
 - data(path): this returns the json at the path,
+- create_alias(self,existing_path,new_path,map): this chainges the path from a path to any other string value 
 - sound(path): this returns the sound at the path,
 - warp_image(self,image,sizex,sizey,angle): this returns your image except warped to the specifications,
 - rotate_image(self,image,angle): this rotates your image,
@@ -151,6 +153,36 @@ class Layar_manager: this class is responsible for managing multiple layers (cam
 - add_obj(self,obj,layar_pryoraty): this automatically adds an rendering obj to a layer,
 - remove_obj(self,obj,layar_pryoraty): this automatically removes an rendering obj from a layer
 
+
+class Vector: this is a simple vector class for 2d vectors
+- data : this vector dose not actualy update the position of its self until an update method is called. instead it perjects the destination point 
+- this contains a dx,dy and its x,y but dose not actualy contain an angle or a speed 
+- couculate_dx_dy(self,speed,angle): this couculates the angle and the speed and then returns it in the order that the function name sais
+- couculate_angle_speed(self,dx,dy): this couculates the angle and speed of the vector baced off of the dx and dy
+- update_pos(self,time_=1):  this updates the pos of the vector and sets the pos to the perjected pos 
+- add_vector(self,vector:"Vector"): this adds another vector the the curent vector
+- sub_vector(self,vector:"Vector"): this subtracts another vector from the curent vector
+- print_data(self): prints the vectors data to the console
+- get_pos_prejection(self,time_=1): gets the perjected pos of the vector
+- get_pos(self): get the actual pos of the vector
+- get_angle_speed(self): gets the angle and speed of the vector
+- set_pos(self,x,y): sets the pos of the vector
+- set_dx_dy(self,dx,dy): sets the dx and dy of the vector without updating the pos first
+- set_dx_dy_updated(self,dx,dy,time_=1): this sets the dx and dy after updating the pos of the vector
+
+class Interactor: this class is holds a hitbox rect and a vector for movement and colision detection and in the future other stuff as well but the interactor dose use an angle and speed unlike the Vector class
+- variavles : Interactor.interactor_count = 0 , Interactor.intoractors = []   : these are clas wide varyables
+- update(self): this updates the vectors pos to be at the vectors perjection and sycs the hitbox
+- add_to_built_in_list(self): this adds the curent class intance to the interactors build in list
+- get_pos(self): this gets the perjected pos of the interactor
+- set_pos(self,x,y): this sets the pos of the interactor
+- set_angle_speed(self,angle,speed): this sets the angle and speed of the interactor
+- add_vector(self,vector:"Vector"): adds a vector to the interactor
+- sub_vector(self,vector:"Vector"): subtracts a vector from the interactor
+- check_colision(self,other:"Interactor"): this check if the curent interactor is coliding with another interactor
+- check_colisions(self,others:"list[Interactor]"): this returns all the interactors that the curent interactor is coliding with
+- check_colisions_with_vectors(self,others:"list[Vector]"): this returns all vectors that collide with the hitbox of the curent interactor
+- 
 
 class Delta_timer: this class gets the dt
     - def get_dt(): this returns the delta time

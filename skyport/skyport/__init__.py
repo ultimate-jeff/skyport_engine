@@ -19,7 +19,7 @@ if BASE_DIR not in sys.path:
 from .rendering_eng import (Display_manager,GSTI)
 
 from .global_utils import (
-    Delta_timer, Util, Loader, r_obj, Sprite,loger,Render
+    Delta_timer, Util, Loader, r_obj, Sprite,loger,Render,Vector,Interactor
 )
 from .core.paths import pygame
 
