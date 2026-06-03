@@ -183,6 +183,10 @@ class Chunk:
         self.surf.blit(surf,(x,y))
     def fill(self,fill_color):
         self.surf.fill(fill_color)
+    def get_surf(self,zoom=None):
+        if zoom == None:
+            zoom = self._last_zoom
+        return self.scaled_surface(zoom)
 
     def blit_objs_v2(self,zoom,cam,chunk_screen_x,chunk_screen_y):
         for obj in self.all_objs: # requierd atributes of rendering obj is .get_surf, .x ,.og_x , .y ,.og_y

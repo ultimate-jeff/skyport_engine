@@ -7,7 +7,7 @@ with open("README.md","r") as f:
 setup(
     name="skyport_engine",
     # version format: major version . minor version . patch version
-    version="0.1.37",
+    version="0.1.38",
     author="Matthew R",
     author_email="matthew.le.robins@gmail.com",
     include_package_data=True,
@@ -25,9 +25,9 @@ setup(
 #compile with:
 # cd "C:\Users\matt\Desktop\skyport"; python setup.py sdist bdist_wheel
 
-#   pip install --force-reinstall dist\skyport_engine-0.1.37-py3-none-any.whl
+#   pip install --force-reinstall dist\skyport_engine-0.1.38-py3-none-any.whl
 
-#   cd "C:\Users\matt\Desktop\skyport"; python setup.py sdist bdist_wheel ; pip install --force-reinstall dist\skyport_engine-0.1.37-py3-none-any.whl              
+#   cd "C:\Users\matt\Desktop\skyport"; python setup.py sdist bdist_wheel ; pip install --force-reinstall dist\skyport_engine-0.1.38-py3-none-any.whl              
 
 
 #   twine upload dist/*
