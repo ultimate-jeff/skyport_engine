@@ -65,13 +65,19 @@ class Loger(Class_Data):
         for msg in self._errors:
             print(msg)
         print("---------------")
-    def error(self,msg:"str",error,metadata:"str"="",sevarity_index:"int"=0):
-        self._errors.append(f"{self.sevarity_index[sevarity_index]}!!- error -> {msg} , extra_data -> {metadata} -!!{prin_RESET}")
-        if sevarity_index >= 3:
-            self.output_print_data()
-            exit(1)
-        return None     
-
+    def error(self,msg:"str",error=None,metadata:"str"="",sevarity_index:"int"=0):
+        if error == None:
+            self._errors.append(f"{self.sevarity_index[sevarity_index]}!!- error -> {msg} , extra_data -> {metadata} -!!{prin_RESET}")
+            if sevarity_index >= 3:
+                self.output_print_data()
+                exit(1)
+            return None     
+        else:
+            self._errors.append(f"{self.sevarity_index[sevarity_index]}!!- error -> {msg} , extra_data -> {metadata} , python error : {self.error}-!!{prin_RESET}")
+            if sevarity_index >= 3:
+                self.output_print_data()
+                exit(1)
+                
 loger = Loger()
 
 
@@ -144,6 +150,20 @@ class Util(Class_Data):
         pygame.surfarray.pixels_alpha(new_surface)[:] = arr_alpha
         return new_surface
 
+def Load_file(func,mode="r"):
+    """this wrapper you pass in a lambda function that takes a file obj and reads the data and returns it"""
+    def wrapper(path):
+        with open(path,mode) as f:
+            data = func(f)
+        return data
+    return wrapper
+def Save_file(func,mode="w"):
+    """this wrapper you pass in a lambda that takes in a file obj and the data it wants to save"""
+    def wrapper(path,data):
+        with open(path,mode) as f:
+            func(f,data)
+    return wrapper
+
 class Loader(Class_Data):
     error_asset_bace_dir=__file__
     error_asset_map = {}
@@ -157,6 +177,11 @@ class Loader(Class_Data):
             self.supported_types[t] = lambda p: pygame.image.load(p).convert()
         for t in Loader._suported_audio_formats:
             self.supported_types[t] = pygame.mixer.Sound
+    def init():
+        loader = Loader(Loader.error_asset_bace_dir)
+        Loader.error_asset_map["image"] = loader.read("assets/images/error.png")
+        Loader.error_asset_map["sound"] = loader.read("assets/sounds/errpr.mp3")
+        Loader.error_asset_map["data"] = loader.read("assets/data/error.json")
 
     def __init__(self,dunder_file=None):
         super().__init__()
@@ -168,21 +193,21 @@ class Loader(Class_Data):
         self._map = {}
         self._error_assets = {}
         self.supported_types = {
-            ".txt": lambda p: open(p, "r").read(),
-            ".json": lambda p: json.load(open(p, "r")),
-            ".csv": lambda p: list(csv.reader(open(p, "r"))),
-            ".bin": lambda p: open(p, "rb").read(),
-            ".toml": lambda p: tomllib.load(open(p, "rb"))
+            ".txt": Load_file(lambda f: f.read()),
+            ".json": Load_file(json.load),
+            ".csv": Load_file(lambda f: list(csv.reader(f))),
+            ".bin":  Load_file(lambda f: f.read(),"rb"),
+            ".toml": Load_file(lambda f: tomllib.load(f))
         } # unknow types will be read as a bynary 
         self.unsupported_handler = None
         self.supported_savers = {
             ".png": lambda p, d: pygame.image.save(d, p),
             ".jpg": lambda p, d: pygame.image.save(d, p),
             ".jpeg": lambda p, d: pygame.image.save(d, p),
-            ".txt": lambda p, d: open(p, "w").write(str(d)),
-            ".json": lambda p, d: json.dump(d, open(p, "w"), indent=4),
+            ".txt": Save_file(lambda f, d: f.write(str(d))),
+            ".json": Save_file(lambda f, d: json.dump(d, f, indent=4)),
             ".csv": self._save_csv,
-            ".bin": lambda p, d: open(p, "wb").write(d),
+            ".bin": Save_file(lambda f, d: f.write(d)),
         }
         self._init_supported_types()
     def _save_csv(self, path, data):
@@ -313,10 +338,10 @@ class Loader(Class_Data):
             item = map_b[k]
             map_a[k] = item
         return map_a
-    def save(self,path:"str",map_key:"str"):
-        data = self._map.get(map_key)
+    def save(self,path:"str",data):
+        data
         if( data == None ):
-            loger.error(f"map key of {map_key} dose not exsist in map of Loader {self.id} (file not saved)")
+            loger.error(f"None is an invalid file content. can't save None to {path}")
             return
         full_path = self.resolve_path(path)
         extension = os.path.splitext(full_path)[1].lower()
@@ -325,9 +350,9 @@ class Loader(Class_Data):
             return
         try:
             self.supported_savers[extension](full_path, data)
-            loger.log(f"sucsesfully saved map_key {map_key} to {path}")
+            loger.log(f"sucsesfully saved map_key data to {path}")
         except Exception as e:
-            pass
+            loger.error(f"error during save of file to path  : {path}",e)
 
     def save_map(self,path:"str",mapp:dict):
         try:

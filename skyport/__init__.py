@@ -33,5 +33,9 @@ prin_VIOLET = '\033[38;5;93m'
 prin_SALMON = '\033[38;5;209m'
 prin_DARK_GREEN = '\033[38;5;22m'
 
-from .global_utils import (Loader,loger,Util,pygame,Camra,Chunk,Delta_timer)
+__version__ = "0.2.12"
+
+from .global_utils import (Loader,loger,Util,pygame,Camra,Chunk,Delta_timer,Save_file,Load_file)
 from .main import (Display_Manager)
+
+
