@@ -7,8 +7,9 @@ version (idk look on pypi) ( untested )
  
 The purpose of skyport is to be a game engine that automatically takes care of the rendering loop, file preloading, and a few useful utility tools.
 
-# github :
-https://github.com/ultimate-jeff/skyport_engine 
+# GitHub and pypi :
+GitHub : https://github.com/ultimate-jeff/skyport_engine 
+pypi : https://pypi.org/project/skyport-engine/ 
  
 # Boilerplate code:
 ```python
@@ -132,6 +133,10 @@ display_manager.remove_keyup_bind(pygame.K_a,my_function) # this will remove the
 display_manager.remove_keydown_bind(pygame.K_s,function)
 
 display_manager.remove_keypressed_bind(pygame.K_e,[func1,func2,func3]) #<- you can also remove multiple binds and this works on the other types as well
+```
+you might want to use mouse position on some of your games and to do that you would use display_manager.get_mouse_pos() and this would return a tuple of x and y of the mouse pos (not of actual pos but pos relative to the display not window)
+```python
+mouse_pos = display_manager.get_mouse_pos() # this returns (x,y)
 ```
 ### how binds get triggered :
 for your keybinds to work in the game loop the event handler must be called

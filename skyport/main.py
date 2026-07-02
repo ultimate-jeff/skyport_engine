@@ -23,10 +23,11 @@ class Display_Manager(Class_Data):
         self.loops = 0
         self.target_fps = 60
         self.running = False
+        self.resizeable_window = resizable
         self._display_size = display_size
         self.window_size = window_size
         self.display = pygame.Surface(display_size)
-        self.window = pygame.display.set_mode(window_size,pygame.DOUBLEBUF | pygame.HWSURFACE | pygame.RESIZABLE)
+        self.window = pygame.display.set_mode(window_size,pygame.DOUBLEBUF | pygame.HWSURFACE | pygame.RESIZABLE if resizable else 0)
         pygame.display.set_icon(window_ico) if window_ico else None
         pygame.display.set_caption(window_name)
 
@@ -45,15 +46,18 @@ class Display_Manager(Class_Data):
         self._new_size = (int(self.display.get_width() * self._scale), int(self.display.get_height() * self._scale))
         self._W_pos = ((self.window_width - self._new_size[0]) // 2, (self.window_height - self._new_size[1]) // 2)
 
+    def _couculate_display_center(self):
         self.center_x = self.display.get_width() / 2
         self.center_y = self.display.get_height() / 2
 
-    def get_mouse_pos(self):
+    def get_mouse_pos(self) -> "tuple(x,y)":
+        """returns (x,y) of your mouse relative to the window"""
         mx, my = pygame.mouse.get_pos()
         self.mouse_pos = (((mx - self._W_pos[0]) / self._scale),((my - self._W_pos[1]) / self._scale))
         return self.mouse_pos
 
     def update_window(self):
+        """this manually updates the window (do not call this after starting rendering thread bc the rendering thread already dose)"""
         #self._event()
         self.loops += 1
         with self._locks["display"]:
@@ -69,6 +73,7 @@ class Display_Manager(Class_Data):
             self.__clock.tick(self.target_fps)
         
     def START_RENDERING_THREAD(self, fps):
+        """this starts the rendering thread"""
         self.target_fps = fps
         self.running = True
         self.rendering_thread = threading.Thread(target=self._rendering_loop, daemon=True)
@@ -76,6 +81,7 @@ class Display_Manager(Class_Data):
         loger.log("Rendering thread started")
 
     def STOP_RENDERING_THREAD(self):
+        """did you know that this stops the rendering thread"""
         if self.rendering_thread and self.rendering_thread.is_alive():
             self.running = False
             self.rendering_thread.join() 
@@ -93,6 +99,7 @@ class Display_Manager(Class_Data):
                 self._exacute_funcs(funcs)
 
     def event_handler(self):
+        """you will need to call this in your game loop to handle input events like window resizing or keybinds"""
         try:
             self._handle_buttons_keybinds()
             events = pygame.event.get()
@@ -103,61 +110,74 @@ class Display_Manager(Class_Data):
                     self.STOP_RENDERING_THREAD()
                     pygame.quit()
                 if event.type == pygame.VIDEORESIZE:
+                    print(event.size)
                     self._couculate_window_scaling()
+                    self.window.fill((0,0,0))
                 if event.type == pygame.KEYDOWN:
-                    funcs = self.keybinds["down"].get(event.key,lambda : loger.log(f"key {event.key} is not bound (keydonw)"))
+                    funcs = self.keybinds["down"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keydonw)")])
                     self._exacute_funcs(funcs)
                 if event.type == pygame.KEYUP:
-                    funcs = self.keybinds["up"].get(event.key,lambda : loger.log(f"key {event.key} is not bound (keyup)"))
+                    funcs = self.keybinds["up"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keyup)")])
                     self._exacute_funcs(funcs)
         except Exception as e:
             loger.log(f"error in event handeling: {e}")
             events = []
 
     def blit(self,source: "pygame.Surface", dest: "pygame.RectLike" = (0, 0), area: "pygame.RectLike" = None, special_flags: "int" = 0):
+        """self.display.blit(.....)"""
         with self._locks["display"]:
             self.display.blit(source,dest,area,special_flags)
 
     def fill(self,color:"tuple"=(0,0,0,0),rect:"pygame.Rect"=None,special_flags:"int"=0):
+        """self.display.fill(...)"""
         with self._locks["display"]:
             self.display.fill(color,rect,special_flags)
     def get_display(self):
         return self.display
     def set_tfps(self,value:"int"):
+        """sets the target frames per second"""
         with self._locks["target_fps"]:
             self.target_fps = value
     def get_tfps(self):
+        """gets the target frames per second"""
         with self._locks["target_fps"]:
             value = self.target_fps
         return value
     def get_fps(self):
+        """this gets the actual fps"""
         return self._clock.get_fps()
     
-    def add_keyup_bind(self,key:"int",func:"function"):
-        self.keybinds["up"].setdefault(key, []).append(func)
-    def add_keydown_bind(self,key:"int",func:"function"):
-        self.keybinds["down"].setdefault(key, []).append(func)
-    def add_keypressed_bind(self,key:"int",func:"function"):
-        self.keybinds["buttons"].setdefault(key, []).append(func)
+    def _add_bind(self, _type, key, func):
+        binds = self.keybinds[_type].setdefault(key, [])  # <-- need this
+        if isinstance(func, (list, tuple)):
+            binds.extend(func)
+        else:
+            binds.append(func)
 
-    def _remove_bind(self,type,key,func):
-        if key in self.keybinds[type]:
+    def add_keyup_bind(self,key:"int",func:"function"):
+        self._add_bind("up",key,func)
+    def add_keydown_bind(self,key:"int",func:"function"):
+        self._add_bind("down",key,func)
+    def add_keypressed_bind(self,key:"int",func:"function"):
+        self._add_bind("buttons",key,func)
+
+    def _remove_bind(self,_type,key,funcs):
+        funcs = funcs if isinstance(funcs,(tuple,list)) else [funcs]
+        if key not in self.keybinds[_type]:
+            loger.log(f"invalid key {key} (try using pygame.K_...)")
+            return
+        binds = self.keybinds[_type][key]
+        for func in funcs:
             try:
-                self.keybinds[type][key].remove(func)
+                binds.remove(func)
             except ValueError:
-                loger.log(f"function to key {key} not found")
-            if not self.keybinds[type][key]:
-                del self.keybinds[type][key]
-                
+                loger.log(f"function to {key} not found. func->{func}")
+        if not binds:
+            del self.keybinds[_type][key]
+
     def remove_keyup_bind(self,key:"int",func:"function"):
-        keys = key if isinstance(key, (list, tuple)) else [key]
-        for k in keys:
-            self._remove_bind("up", k, func)
+        self._remove_bind("up",key,func)
     def remove_keydown_bind(self,key:"int",func:"function"):
-        keys = key if isinstance(key, (list, tuple)) else [key]
-        for k in keys:
-            self._remove_bind("down", k, func)
+        self._remove_bind("down",key,func)
     def remove_keypressed_bind(self,key:"int",func:"function"):
-        keys = key if isinstance(key, (list, tuple)) else [key]
-        for k in keys:
-            self._remove_bind("buttons", k, func)
+        self._remove_bind("buttons",key,func)

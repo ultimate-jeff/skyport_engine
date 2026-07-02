@@ -65,6 +65,8 @@ class Loger(Class_Data):
         for msg in self._errors:
             print(msg)
         print("---------------")
+        self._errors.clear()
+        self._logs.clear()
     def error(self,msg:"str",error=None,metadata:"str"="",sevarity_index:"int"=0):
         if error == None:
             self._errors.append(f"{self.sevarity_index[sevarity_index]}!!- error -> {msg} , extra_data -> {metadata} -!!{prin_RESET}")
