@@ -378,6 +378,30 @@ time_dif = dt.get_dt()
 ```
 get_dt returns the difference in time from when the instance is created to the call of get_dt and then if u call it again it returns the difrance in time from the last call to the current call 
  
+# Render :
+the render class is a data class holding data like rect,x,y,angle,surface and has a cuple utilaty tools and it was made to be used like :
+```python
+
+class My_Obj(sp.Render):
+    def __init__(self, x, y, width, height, angle, surf = None):
+        super().__init__(x, y, width, height, angle, surf)
+        # my objs data like health or max speed .......
+   
+    # rest of class .....
+
+```
+the Render class would just automaticly handle image scaling and rotating 
+
+## methods :
+some of the methods as of this update are :
+```md
+ - get_surf : this returns the up to date surf 
+ - get_pos : this returns -> (x,y)
+ - get_size : this returns -> (width,height)
+ - set_angle : this sets the angle and auto updates the surf 
+ - set_size : this sets the size and auto updates the surf
+```
+
 # Camra:
 The Camra is a special chunk-based map renderer that can efficiently render large 2D maps (more documentation will come later).
  

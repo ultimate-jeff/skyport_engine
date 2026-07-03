@@ -9,6 +9,7 @@ import threading
 import math
 import numpy as np
 import time
+import random
 
 import pygame
 
@@ -46,6 +47,16 @@ class Class_Data:
     def __init__(self):
         type(self).instances += 1
         self.id = type(self).instances
+    def random_function_that_dose_nuthing(self):  
+        random_msgs = (
+            "nuthing happend",
+            "you didn't miss anything",
+            "this function has one job and it's not doing it",
+            "congratulations, you called a function",
+            "404 purpos of function not found",
+            "( ⚆ _ ⚆ )  ...nuthing."
+        )
+        print(random.choice(random_msgs))
 
 class Loger(Class_Data):
     def __init__(self):
@@ -87,6 +98,10 @@ class Util(Class_Data):
     def __init__(self):
         super().__init__()
 
+    def dot_product(self,vec1:"tuple[int,float]",vec2:"tuple[int,float]"):
+        """returns the dod product of 2 2d vectors (x,y)"""
+        return vec1[0]*vec2[0] + vec1[1]*vec2[1]
+
     def get_angle_and_dist(self,x1:"int",y1:"int",x:"int",y:"int"):
         """returns the angle and dist between 2 points (it returns that data in that ordor )"""
         dx = x1 - x
@@ -121,7 +136,7 @@ class Util(Class_Data):
             return 1
         except Exception as e:
             loger.error("error trying to play sound",e)
-    def play_sound_from_point(self,pf,sound_pos:list,listener_pos:list,volume:float=0.5,loops=0,distance_fade=0.5):
+    def play_sound_from_point(self,pf,sound_pos:"tuple",listener_pos:"tuple",volume:"float"=0.5,loops:"int"=0,distance_fade:"float"=0.5):
         """this playes a sound from a point"""
         max_vol = volume
         dist = math.hypot(sound_pos[0] - listener_pos[0], sound_pos[1] - listener_pos[1])
@@ -141,7 +156,6 @@ class Util(Class_Data):
 
     def color_swap(self,surface: 'pygame.Surface', old_color: tuple, new_color: tuple) -> 'pygame.Surface':
         """returns a surf that every instance of one color is replaced with a nuther"""
-        #from skyport.rendering_eng import pygame
         arr_rgb = pygame.surfarray.array3d(surface)
         arr_alpha = pygame.surfarray.array_alpha(surface)
         mask = np.all(arr_rgb == old_color, axis=-1)
@@ -363,6 +377,7 @@ class Loader(Class_Data):
         except Exception as e:
             loger.error(f"failed to save Loader map to path {path}",e)
 
+
 class Delta_timer(Class_Data):
     def __init__(self):
         super().__init__()
@@ -537,5 +552,3 @@ class Chunk(Class_Data):
     def render(self,zoom=1):
         self.fill(self.bg_color)
         self._update_func(self)
-
-        

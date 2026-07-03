@@ -181,3 +181,56 @@ class Display_Manager(Class_Data):
         self._remove_bind("down",key,func)
     def remove_keypressed_bind(self,key:"int",func:"function"):
         self._remove_bind("buttons",key,func)
+
+
+
+class Render(Class_Data):
+    def __init__(self,x:"int",y:"int",width:"int",height:"int",angle:"int",surf:"pygame.Surface"=None):
+        """this class is meant to be inherited by other classes or used in them so like class MyGameObj(Render): ...."""
+        super().__init__()
+        self.rect = pygame.Rect(x,y,width,height)
+        self.angle = angle
+        self.OG_image = surf if surf != None else pygame.Surface((width,height),flags=pygame.SRCALPHA)
+        self._last_angle = None
+        self._last_size = None
+        self.update_surf()
+
+    def _scale(self):
+        size = self.rect.size
+        if self._last_size != size:
+            self._scaled_image = pygame.transform.scale(self.OG_image,size)
+            self._last_size = size
+            self._last_angle = None
+    def _rotate(self):
+        if self._last_angle != self.angle:
+            self.image = pygame.transform.rotate(self._scaled_image,self.angle)
+            self._last_angle = self.angle
+    def update_surf(self):
+        """this updates the self.image so that it is the corect scale and angle"""
+        self._scale()
+        self._rotate()
+
+    def set_angle(self,new_angle:"int"):
+        """sets angle and automaticly updates the surf"""
+        self.angle = new_angle
+        self.update_surf()
+    def set_rect(self,new_rect:pygame.Rect):
+        """sets the rect and automaticly updates the surf"""
+        self.rect = new_rect
+        self.update_surf()
+    def get_pos(self) -> tuple:
+        return (self.rect.x,self.rect.y)
+    def set_pos(self,x,y):
+        self.rect.x,self.rect.y = x,y
+    def get_size(self) -> tuple:
+        return self.rect.size
+    def set_size(self,new_size):
+        """this sets the size and automaticly updates the surf"""
+        self.rect.size = new_size
+        self.update_surf()
+    def get_surf(self) -> pygame.Surface:
+        return self.image
+
+
+
+
