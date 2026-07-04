@@ -408,6 +408,9 @@ The Camra is a special chunk-based map renderer that can efficiently render larg
 # Chunk:
 This class is used by the Camra class to render large 2D maps (more documentation will come later).
  
+# SDL2_Display_Manager :
+this is the same as Display_Manager but it uses pygames sdl2 to use ur gpu (more documentation will come ...)
+
 # dev_info:
     email: matthew.le.robins+proj@gmail.com
     (please only email if you have found a bug and a good way to fix it, and please ensure I have a way to contact you about your suggested changes or requests)

@@ -3,6 +3,7 @@ import queue
 import time
 
 from skyport.global_utils import *
+from pygame import _sdl2 as video
 
 pygame.display.init()
 pygame.display.set_mode((1, 1), pygame.HIDDEN)
@@ -34,6 +35,7 @@ class Display_Manager(Class_Data):
         if not pygame.display.is_fullscreen() and force_full_screen:
             pygame.display.toggle_fullscreen()
         self._couculate_window_scaling()
+        self._couculate_display_center()
 
     def tick(self,tps):
         self._user_clock.tick(tps)
@@ -145,7 +147,7 @@ class Display_Manager(Class_Data):
         return value
     def get_fps(self):
         """this gets the actual fps"""
-        return self._clock.get_fps()
+        return self.__clock.get_fps()
     
     def _add_bind(self, _type, key, func):
         binds = self.keybinds[_type].setdefault(key, [])  # <-- need this
@@ -233,4 +235,103 @@ class Render(Class_Data):
 
 
 
+class SDL2_Display_Manager(Display_Manager):
+    def __init__(self, window_size, display_size, force_full_screen = False, window_name = "skyport-engine window", window_ico = None, resizable = True):
+        self._locks = {
+            "target_fps":threading.Lock(),
+            "running":threading.Lock(),
+            "display":threading.Lock()
+        }
+        self._user_clock = pygame.time.Clock()
+        self.rendering_thread = None
+        self.keybinds = {"up":{},"down":{},"buttons":{}}
+        self.loops = 0
+        self.target_fps = 60
+        self.running = False
+        self._display_dirty = True
+
+        self.resizeable_window = resizable
+        self._display_size = display_size
+        self.window_size = window_size
+        self.display = pygame.Surface(display_size)
+        self.window = video.Window(window_name,window_size,resizable=resizable)
+        self._render = video.Renderer(self.window)
+
+        self._display_texture = video.Texture(self._render, self._display_size)
+        if window_ico:
+            self.window.set_icon(window_ico)
+        if force_full_screen:
+            self.window.set_fullscreen(True) 
+
+        self._couculate_window_scaling()
+
+    def _couculate_window_scaling(self):
+
+        self.window_width, self.window_height = self.window.size
+        self.display_rect = self.display.get_rect(center=(self.window_width // 2, self.window_height // 2))
+        self._scale = min(self.window_width / self.display.get_width(), self.window_height / self.display.get_height())
+        self._new_size = (int(self.display.get_width() * self._scale), int(self.display.get_height() * self._scale))
+        self._W_pos = ((self.window_width - self._new_size[0]) // 2, (self.window_height - self._new_size[1]) // 2)
+
+        self._dest_rect = (*self._W_pos, *self._new_size)  
+
+    def update_window(self):
+        """this manually updates the window (do not call this after starting rendering thread bc the rendering thread already dose)"""
+        #self._event()
+        self.loops += 1
+        with self._locks["display"]:
+            if self._display_dirty:
+                self._display_dirty = False
+                self._display_texture.update(self.display)
+        self._render.clear()
+        self._display_texture.draw(dstrect=self._dest_rect)
+        self._render.present()
+
+    def _rendering_loop(self):
+        self.__clock = pygame.time.Clock()
+        while (self.running):
+            self.update_window()
+            self.__clock.tick(self.target_fps)
+
+    def blit(self, source: "pygame.Surface", dest: "pygame.RectLike" = (0, 0), area: "pygame.RectLike" = None, special_flags: "int" = 0):
+        """self.display.blit(.....)"""
+        with self._locks["display"]:
+            self.display.blit(source, dest, area, special_flags)
+            self._display_dirty = True
+
+    def fill(self, color: "tuple" = (0,0,0,0), rect: "pygame.Rect" = None, special_flags: "int" = 0):
+        """self.display.fill(...)"""
+        with self._locks["display"]:
+            self.display.fill(color, rect, special_flags)
+            self._display_dirty = True
+
+    def get_fps(self):
+        return self.__clock.get_fps()
+        
+    def event_handler(self):
+        """you will need to call this in your game loop to handle input events like window resizing or keybinds"""
+        try:
+            self._handle_buttons_keybinds()
+            events = pygame.event.get()
+            for event in events:
+                if event.type == pygame.WINDOWCLOSE:
+                    self.running = False
+                    print("\nquit pressed\n")
+                    self.STOP_RENDERING_THREAD()
+                    pygame.quit()
+
+                if event.type == pygame.WINDOWRESIZED:
+                    print(event.x, event.y) 
+                    self._couculate_window_scaling()
+                    self._render.clear()
+
+                if event.type == pygame.KEYDOWN:
+                    funcs = self.keybinds["down"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keydonw)")])
+                    self._exacute_funcs(funcs)
+                if event.type == pygame.KEYUP:
+                    funcs = self.keybinds["up"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keyup)")])
+                    self._exacute_funcs(funcs)
+        except Exception as e:
+            loger.log(f"error in event handeling: {e}")
+            events = []
 
