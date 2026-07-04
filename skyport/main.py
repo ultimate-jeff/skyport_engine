@@ -250,20 +250,25 @@ class SDL2_Display_Manager(Display_Manager):
         self.running = False
         self._display_dirty = True
 
+        self.window_name = window_name
+        self._window_ico = window_ico
+        self._force_full_screen = force_full_screen
         self.resizeable_window = resizable
         self._display_size = display_size
         self.window_size = window_size
+
         self.display = pygame.Surface(display_size)
-        self.window = video.Window(window_name,window_size,resizable=resizable)
-        self._render = video.Renderer(self.window)
+        self.__clock = pygame.time.Clock()
+        #self.window = None # video.Window(window_name,window_size,resizable=resizable)
+        #self._render = video.Renderer(self.window)
 
-        self._display_texture = video.Texture(self._render, self._display_size)
-        if window_ico:
-            self.window.set_icon(window_ico)
-        if force_full_screen:
-            self.window.set_fullscreen(True) 
+        #self._display_texture = video.Texture(self._render, self._display_size)
+        #if window_ico:
+        #    self.window.set_icon(window_ico)
+        #if force_full_screen:
+        #    self.window.set_fullscreen(True) 
 
-        self._couculate_window_scaling()
+        #self._couculate_window_scaling()
 
     def _couculate_window_scaling(self):
 
@@ -277,21 +282,34 @@ class SDL2_Display_Manager(Display_Manager):
 
     def update_window(self):
         """this manually updates the window (do not call this after starting rendering thread bc the rendering thread already dose)"""
-        #self._event()
         self.loops += 1
         with self._locks["display"]:
             if self._display_dirty:
                 self._display_dirty = False
                 self._display_texture.update(self.display)
+                #print("logical_size:", self._render.logical_size, "viewport:", self._render.get_viewport(), "dest_rect:", self._dest_rect)
+
+                #print("renderer attrs:", [a for a in dir(self._render) if not a.startswith('_')])  # temporary, run once
         self._render.clear()
         self._display_texture.draw(dstrect=self._dest_rect)
         self._render.present()
 
     def _rendering_loop(self):
-        self.__clock = pygame.time.Clock()
+
+        self.window = video.Window(self.window_name, self.window_size, resizable=self.resizeable_window)
+        self._render = video.Renderer(self.window)
+        self._display_texture = video.Texture(self._render, self._display_size)
+        if self._window_ico:
+            self.window.set_icon(self._window_ico)
+        if self._force_full_screen:
+            self.window.set_fullscreen(True)
+        self._couculate_window_scaling()
+
+
         while (self.running):
             self.update_window()
             self.__clock.tick(self.target_fps)
+            self.event_handler()
 
     def blit(self, source: "pygame.Surface", dest: "pygame.RectLike" = (0, 0), area: "pygame.RectLike" = None, special_flags: "int" = 0):
         """self.display.blit(.....)"""
@@ -321,9 +339,11 @@ class SDL2_Display_Manager(Display_Manager):
                     pygame.quit()
 
                 if event.type == pygame.WINDOWRESIZED:
-                    print(event.x, event.y) 
-                    self._couculate_window_scaling()
-                    self._render.clear()
+                    with self._locks["display"]:
+                        print(f"resize to ({event.x},{event.y})")
+                        self._couculate_window_scaling()
+                        self._display_texture = video.Texture(self._render, self._display_size)
+                        self._display_dirty = True
 
                 if event.type == pygame.KEYDOWN:
                     funcs = self.keybinds["down"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keydonw)")])

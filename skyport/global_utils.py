@@ -90,6 +90,8 @@ class Loger(Class_Data):
             if sevarity_index >= 3:
                 self.output_print_data()
                 exit(1)
+    def has_logs(self):
+        return (self._errors != [] and self._logs != [])
                 
 loger = Loger()
 

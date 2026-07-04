@@ -410,7 +410,18 @@ This class is used by the Camra class to render large 2D maps (more documentatio
  
 # SDL2_Display_Manager :
 this is the same as Display_Manager but it uses pygames sdl2 to use ur gpu (more documentation will come ...)
+Note : 
+```md
+do not call the event handler when using the sdl2 display manager (it might freez or crash)
+```
+other Note :
+```md
+the sdl2 display manager is not complete and has a lot of bugs like auto keybinds dont work and others so if you manage to fix any or just find some u can email me about them and if u can provide a potential fix plz do 
+```
+
 
 # dev_info:
     email: matthew.le.robins+proj@gmail.com
-    (please only email if you have found a bug and a good way to fix it, and please ensure I have a way to contact you about your suggested changes or requests)
+    ```md
+    (please only email if you have found a bug and a way to fix it, and please ensure I have a way to contact you about your suggested changes or requests)
+    ```
