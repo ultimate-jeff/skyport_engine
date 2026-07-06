@@ -395,7 +395,7 @@ class Delta_timer(Class_Data):
 
 
 
-class Camra(Class_Data):
+class Camera(Class_Data):
     def pryoraty(self,a=None,b=None):
         """"this will alwas return a if there is an a i know aaaaaaaa thats scary"""
         if a != None:

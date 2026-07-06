@@ -1,17 +1,47 @@
 made by: Matthew R and William L
+```
+///////////////////////////////////
+-----welcome to skyport_engine-----
+///////////////////////////////////
+```
+( semmi stable )
  
-////////////////////////////
------welcome to skyport-----
-////////////////////////////
-version (idk look on pypi) ( untested )
- 
-The purpose of skyport is to be a game engine that automatically takes care of the rendering loop, file preloading, and a few useful utility tools.
+skyport is a 2D game engine built on pygame-ce that simplifies tasks like managing the window , asset loading , rendering and eventually more.
+# Data :
+## links :
+- GitHub : https://github.com/ultimate-jeff/skyport_engine 
+- pypi : https://pypi.org/project/skyport-engine/ 
 
-# GitHub and pypi :
-GitHub : https://github.com/ultimate-jeff/skyport_engine 
-pypi : https://pypi.org/project/skyport-engine/ 
- 
-# Boilerplate code:
+## Table of Contents
+- Data : (like links or other data)
+- getting started : (like a tutorial on how to use skyport)
+- Content : (like all classes in skyport_engine)
+- dev_info : (like email ...)
+
+## what platforms does skyport_engine work on :
+- windows (this is the platform it is developed on)
+- linux (slight testing has been done on linux)
+- mac (has not been tested yet but might work)
+
+# features :
+- Multithreaded rendering
+- Automatic window management
+- Asset preloading and caching
+- Built-in input handling
+- Delta timer
+- Render helper class
+- Experimental chunk renderer
+- SDL2 renderer (experimental)
+
+# Getting started:
+Note: 
+    skyport is not a replacement for pygame, so it is good to be familiar with pygame.
+    
+to start you will first need skyport_engine 
+```terminal
+pip install skyport-engine
+```
+## Boilerplate code:
 ```python
 import skyport as sp
  
@@ -25,12 +55,8 @@ dm.START_RENDERING_THREAD(fps=60)
 while dm.running:
  
     dm.event_handler()
- 
- 
 ```
-# Getting started:
-Note: skyport is not a replacement for pygame, so it is good to be familiar with pygame.
- 
+
 ## Creating the window:
 To start off you might want to have pygame and skyport, but don't import pygame directly — otherwise you will be using a separate instance of pygame from the rest of skyport. Instead, get pygame from skyport:
 ```python
@@ -111,7 +137,7 @@ while display_manager.running:
  
     display_manager.event_handler() # <- this handles window events and keybinds; if it is not in the game loop the window will not respond
  
-    # this line (\/) is not needed, but it ensures that the game loop has consistent timing (in this case at 20 tisk per second)
+    # this line (\/) is not needed, but it ensures that the game loop has consistent timing (in this case at 20 ticks per second)
     display_manager.tick(tps=20)
 ```
 Creating the game loop is very simple.
@@ -160,14 +186,14 @@ support for more input methods will come if future updates
 ## bliting and filling of the window :
 note :
 ```text
-there are 2 surfs in the display manager 1: the window and 2: the display 
-the display is the one that you will blit to (thw display is scaled to the size of the window then the display is blited to the window)
+there are 2 surfaces in the display manager 1: the window and 2: the display 
+the display is the one that you will blit to (the display is scaled to the size of the window then the display is blitted to the window)
 ```
 there are 3 main methods :
  - blit(self,source: "pygame.Surface", dest: "pygame.RectLike" = (0, 0), area: "pygame.RectLike" = None, special_flags: "int" = 0):
  - fill(self,color:"tuple"=(0,0,0,0),rect:"pygame.Rect"=None,special_flags:"int"=0):
  - get_display() -> display_manager_instance display
-these thre methods are curently all u have to work with but bc u can get the display all pygame ops work 
+these three methods are currently all you have to work with but because you can get the display all pygame ops work 
 ```python
 # .....
 display = display_manager.get_display()
@@ -183,23 +209,23 @@ do take into acount that when you blit something to the display it will not go o
 # ... previos code /\
 display_manager.blit(surf,(10,10)) # blit a surf to pos x=10,y=10
 
-display_manager.update_window() # update window so what was just blited to the display is now on the window
+display_manager.update_window() # update window so what was just blitted to the display is now on the window
 
-display_manager.START_RENDERING_THREAD(fps=60) # the renderin gthread automaticly handles updating the display so after you start the rendering thread you should not call update_window()
+display_manager.START_RENDERING_THREAD(fps=60) # the rendering gthread automatically handles updating the display so after you start the rendering thread you should not call update_window()
 #... game loop \/
 ```
 ## how to use the Loader :
 note :
 ```text
-the loader is made to pre load files so your game is not wating on ssd to load your files
+the loader is made to pre load files so your game is not waiting on ssd to load your files
 ```
 creating a Loader instance is vary easy 
 ```python
 
-loader = skyport.Loader(__file__) # you need to pass this in or the loader might not use the corect bace dir for fealative paths 
+loader = skyport.Loader(__file__) # you need to pass this in or the loader might not use the correct base directory for relative paths 
 
 ```
-to actualy pre load your loader instance with files you will need to call loader.load_from_map
+to actually pre load your loader instance with files you will need to call loader.load_from_map
 ```python
 loader = skyport.Loader(__file__)
 
@@ -209,7 +235,7 @@ when you call load_from_map the loader instance will look at that file dir and t
 
 note :
 ```text
-to see how to make a Loader map go to the Loader section in the read me and in a later update there will be a tool to automaticly create Loader maps for you 
+to see how to make a Loader map go to the Loader section in the read me and in a later update there will be a tool to automatically create Loader maps for you 
 ```
 
 ### how to read files with the Loader :
@@ -232,7 +258,7 @@ sound = loader.sound(path="my_sounds/idk.mp3") # there is also an error sound
 
 data = loader.data(path="my_data/dave.json") # there is only a error json (try to not use this one but it exsists)
 ```
-the Loaders .image , .sound , .data methods all have the same peramiters as loader.read but they will try to give you an error asset instead of None 
+the Loaders .image , .sound , .data methods all have the same parameters as loader.read but they will try to give you an error asset instead of None 
 ### saving files with the Loader :
 you can save files with loader.save(path,map_key)
 ```python
@@ -246,16 +272,20 @@ loader.save(img,"my_images/new_img.jpeg")
 ## more will come ...
 as of the current version the documentation on how to get started with skyport is not complete and will be in later updates
 
+# Content :
 
-
-# Display_Manager:
+## Display_Manager:
 The Display_Manager is made to automatically handle the window on a separate thread so that the rendering loop can be separate from the game loop.
-the display manager has been lightly coverd in the getting started section but heare we will dive a bit deeper into what the Display_Manager actually can do
+Note :
+```
+the display manager has been mostly coverd in the getting started section but heare we will dive a bit deeper into what the Display_Manager actually can do
+```
+
  
-# Loader:
+## Loader:
 The Loader is made to pre-cache files in memory.
  
-## How to make a Loader map:
+### How to make a Loader map:
 ```json
 {
     "path":{"value":null,"type":null},
@@ -297,7 +327,7 @@ FULL FILE EXAMPLE:
     }
 }
 ```
-## How to use Loader in code:
+### How to use Loader in code:
 The Loader is simple: you first create an instance and pass in `__file__` so that the Loader can resolve relative paths, then you can preload the Loader with a Loader map (this is optional), then you can use the Loader to read files whether they have been pre-cached or not. Example code:
 ```python
 import skyport as sp
@@ -330,7 +360,7 @@ loader.set_map(map)
 ```
 There are more methods in the loader, but they are not mentioned here.
  
-## How to handle supported / unsupported file types:
+### How to handle supported / unsupported file types:
 There are two decorators for adding file type support: Load_file and Save_file.
 Load_file takes in a lambda that takes in a file object and loads it, and Save_file takes in a lambda that takes in a file object and the data to save. For example:
 ```json
@@ -344,7 +374,7 @@ And for saving:
 ```
 note : Load_file and Save_file are decorators that ensure that when the file is open it is safely closed 
  
-# Util:
+## Util:
 This is a utility class that holds random and potentially useful methods, such as:
 - get_angle_and_dist(self,x1:"int",y1:"int",x:"int",y:"int")
 - pryoraty(self,a=None,b=None): this function will return `a` if there is an `a`
@@ -368,7 +398,7 @@ a = util.pryoraty(None,2) # a will be 2
 print(a)
 ```
 
-# Delta_timer:
+## Delta_timer:
 This is for getting the delta time between the current call of `get_dt()` and the last one (there is one method -> get_dt()).
 ```python
 dt = sp.Delta_timer()
@@ -376,10 +406,10 @@ dt = sp.Delta_timer()
 time_dif = dt.get_dt() 
 
 ```
-get_dt returns the difference in time from when the instance is created to the call of get_dt and then if u call it again it returns the difrance in time from the last call to the current call 
+get_dt returns the difference in time from when the instance is created to the call of get_dt and then if you call it again it returns the difference in time from the last call to the current call 
  
-# Render :
-the render class is a data class holding data like rect,x,y,angle,surface and has a cuple utilaty tools and it was made to be used like :
+## Render :
+the render class is a data class holding data like rect,x,y,angle,surface and has a couple utilaty tools and it was made to be used like :
 ```python
 
 class My_Obj(sp.Render):
@@ -390,38 +420,75 @@ class My_Obj(sp.Render):
     # rest of class .....
 
 ```
-the Render class would just automaticly handle image scaling and rotating 
+the Render class would just automatically handle image scaling and rotating 
+Note
+    most of the time image updating is automatic when you use set_angle or set_size but if you mod the OG image you will have to call my_class_instance.update_image() for it to update (this might change in a later update)
 
-## methods :
-some of the methods as of this update are :
-```md
- - get_surf : this returns the up to date surf 
- - get_pos : this returns -> (x,y)
- - get_size : this returns -> (width,height)
- - set_angle : this sets the angle and auto updates the surf 
- - set_size : this sets the size and auto updates the surf
+## Layer :
+the layer can hold many objs that inherit the from Render class and then it will automaticly render them to the display every frame and it will call the update function of the Render class every frame 
+
+```python
+class my_class(skyport.Render):
+    ...
+
+my_layer = skyport.Layer(width=100,height=100)
+
+# you can add layers in layers
+my_layer.add_obj(skyport.Layer(...)) 
+
+# you can also add any class that inherits from skyport.Render class
+my_layer.add_obj(my_class)
+
+# you can remove obj from a layer
+my_layer.remove_obj(my_class)
+
+# if u know the id of an obj u can get it from a layer 
+my_layer.get_obj_from_id(1)
+
+# there are more basic methods
+```
+to use layers and renders to their full potential and render them every frame you just need to put them in your display managers root_layer and then the Renders / Layers will auto update and auto render to the display every frame 
+```python
+my_layer.add_obj(my_obj)
+
+#the obj and the layer will be drawn to the display and window every frame and it will call the update method of my_obj and my_layer every frame as well
+display_manager.root_layer.add_obj(my_layer)
 ```
 
-# Camra:
-The Camra is a special chunk-based map renderer that can efficiently render large 2D maps (more documentation will come later).
+### methods :
+some of the methods as of this update are :
+    - get_surf : this returns the up to date surf 
+    - get_pos : this returns -> (x,y)
+    - get_size : this returns -> (width,height)
+    - set_angle : this sets the angle and auto updates the surf 
+    - set_size : this sets the size and auto updates the surf
+
+
+## Camera:
+Note:
+    this is experimental
+The camera is a special chunk-based map renderer that can efficiently render large 2D maps (more documentation will come later).
  
-# Chunk:
-This class is used by the Camra class to render large 2D maps (more documentation will come later).
+## Chunk:
+Note:
+    this is also experimental
+This class is used by the camera class to render large 2D maps (more documentation will come later).
  
-# SDL2_Display_Manager :
-this is the same as Display_Manager but it uses pygames sdl2 to use ur gpu (more documentation will come ...)
+## SDL2_Display_Manager :
+Note:
+    this is experimental and might not work on your OS and some features might be broken 
+this is the same as Display_Manager but it uses pygames sdl2 to use your gpu (more documentation will come ...)
 Note : 
 ```md
-do not call the event handler when using the sdl2 display manager (it might freez or crash)
+do not call the event handler when using the sdl2 display manager (it might freeze or crash)
 ```
 other Note :
 ```md
-the sdl2 display manager is not complete and has a lot of bugs like auto keybinds dont work and others so if you manage to fix any or just find some u can email me about them and if u can provide a potential fix plz do 
+the sdl2 display manager is not complete and has a lot of bugs like auto keybinds dont work and others so if you manage to fix any or just find some you can email me about them and if you can provide a potential fix plz do 
 ```
 
 
 # dev_info:
-    email: matthew.le.robins+proj@gmail.com
-    ```md
-    (please only email if you have found a bug and a way to fix it, and please ensure I have a way to contact you about your suggested changes or requests)
-    ```
+email: matthew.le.robins+proj@gmail.com
+
+    (please only email if you have found a bug and a way to fix it or have a suggestion , and please ensure I have a way to contact you about your suggested changes or requests)

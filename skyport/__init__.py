@@ -33,13 +33,13 @@ prin_VIOLET = '\033[38;5;93m'
 prin_SALMON = '\033[38;5;209m'
 prin_DARK_GREEN = '\033[38;5;22m'
 
-__version__ = "0.2.9"
+__version__ = "0.2.10"
 
 from .global_utils import (
     Loader,
     loger,
     Util,pygame,
-    Camra,
+    Camera,
     Chunk,
     Delta_timer,
     Save_file,
@@ -49,6 +49,7 @@ from .global_utils import (
 from .main import (
     Display_Manager,
     Render,
+    Layer,
     SDL2_Display_Manager
     )
 

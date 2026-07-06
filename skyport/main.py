@@ -9,15 +9,109 @@ pygame.display.init()
 pygame.display.set_mode((1, 1), pygame.HIDDEN)
 
 
+
+class Render(Class_Data):
+    def __init__(self,x:"int",y:"int",width:"int",height:"int",angle:"int",surf:"pygame.Surface"=None):
+        """this class is meant to be inherited by other classes or used in them so like class MyGameObj(Render): ...."""
+        super().__init__()
+        self.tags = {}
+        self.rect = pygame.Rect(x,y,width,height)
+        self.angle = angle
+        self.OG_image = surf if surf != None else pygame.Surface((width,height),flags=pygame.SRCALPHA)
+        self._last_angle = None
+        self._last_size = None
+        self._is_dirty = False
+        self.update_surf()
+
+    def _scale(self):
+        size = self.rect.size
+        if self._last_size != size:
+            self._scaled_image = pygame.transform.scale(self.OG_image,size)
+            self._last_size = size
+            self._last_angle = None
+    def _rotate(self):
+        if self._last_angle != self.angle:
+            self.image = pygame.transform.rotate(self._scaled_image,self.angle)
+            self._last_angle = self.angle
+    def update_surf(self):
+        """this updates the self.image so that it is the corect scale and angle"""
+        self._scale()
+        self._rotate()
+    def set_angle(self,new_angle:"int"):
+        """sets angle and automaticly updates the surf"""
+        self.angle = new_angle
+        self.update_surf()
+    def set_rect(self,new_rect:pygame.Rect):
+        """sets the rect and automaticly updates the surf"""
+        self.rect = new_rect
+        self.update_surf()
+    def get_pos(self) -> tuple:
+        return (self.rect.x,self.rect.y)
+    def set_pos(self,x,y):
+        self.rect.x,self.rect.y = x,y
+    def get_size(self) -> tuple:
+        return self.rect.size
+    def set_size(self,new_size):
+        """this sets the size and automaticly updates the surf"""
+        self.rect.size = new_size
+        self.update_surf()
+    def get_surf(self) -> pygame.Surface:
+        return self.image
+    
+    def blit(self,source: "pygame.Surface", dest: "pygame.RectLike" = (0, 0), area: "pygame.RectLike" = None, special_flags: "int" = 0):
+        """blits to surf and auto updates"""
+        self.OG_image.blit(source,dest,area,special_flags)
+        self.update_surf()
+    def fill(self,color:"tuple"=(0,0,0,0),rect:"pygame.Rect"=None,special_flags:"int"=0):
+        """fills surf and auto updates"""
+        self.OG_image.fill(color,rect,special_flags)
+        self.update_surf()
+
+class Layer(Render):
+    def __init__(self,width:"int", height:"int" , x:"int"=0, y:"int"=0, angle:"int"=0, surf:"pygame.Surface" = None):
+        super().__init__(x, y, width, height, angle, surf)
+        self.objs = []
+
+    def add_obj(self,obj):
+        self.objs.append(obj)
+    def remove_obj(self,obj):
+        if obj in self.objs:
+            self.objs.remove(obj)
+        else:
+            loger.error(f"obj {obj} is not in layer {self.id}")
+    def get_obj_from_id(self,obj_id:int):
+        for obj in self.objs:
+            if obj.id == obj_id:
+                return obj
+    def get_obj_from_index(self,index:int):
+        try:
+            return self.objs[index]
+        except IndexError:
+            loger.log(f"index {index} not in Layer {self.id}'s list")
+            return None
+
+    def _update_objs(self):
+        for i,obj in enumerate(self.objs):
+            obj.update()
+            self.OG_image.blit(obj.image,obj.get_pos())
+        self.update_surf()
+
+    def update(self):
+        self._update_objs()
+
+
+
 class Display_Manager(Class_Data):
-    def __init__(self,window_size:"tuple",display_size:"tuple",force_full_screen:bool=False,window_name:str="skyport-engine window",window_ico:"pygame.Surface"=None,resizable:bool=True):
+    def __init__(self,window_size:"tuple",display_size:"tuple",force_full_screen:bool=False,window_name:str="skyport-engine window",window_ico:"pygame.Surface"=None,resizable:bool=True,root_layer=None):
         super().__init__()
 
         self._locks = {
             "target_fps":threading.Lock(),
             "running":threading.Lock(),
-            "display":threading.Lock()
+            "display":threading.Lock(),
+            "root_layer":threading.Lock()
         }
+        self.root_layer = root_layer if root_layer != None else Layer(display_size[0],display_size[1])
         self._user_clock = pygame.time.Clock()
         self.rendering_thread = None
         self.keybinds = {"up":{},"down":{},"buttons":{}}
@@ -58,9 +152,16 @@ class Display_Manager(Class_Data):
         self.mouse_pos = (((mx - self._W_pos[0]) / self._scale),((my - self._W_pos[1]) / self._scale))
         return self.mouse_pos
 
+    def _update_root_layer(self):
+        self.root_layer.update()
+        self.display.blit(
+            self.root_layer.get_surf(),
+            self.root_layer.get_pos()
+        )
+
     def update_window(self):
         """this manually updates the window (do not call this after starting rendering thread bc the rendering thread already dose)"""
-        #self._event()
+        self._update_root_layer()
         self.loops += 1
         with self._locks["display"]:
             self._s_display = pygame.transform.scale(self.display, self._new_size)
@@ -186,62 +287,14 @@ class Display_Manager(Class_Data):
 
 
 
-class Render(Class_Data):
-    def __init__(self,x:"int",y:"int",width:"int",height:"int",angle:"int",surf:"pygame.Surface"=None):
-        """this class is meant to be inherited by other classes or used in them so like class MyGameObj(Render): ...."""
-        super().__init__()
-        self.rect = pygame.Rect(x,y,width,height)
-        self.angle = angle
-        self.OG_image = surf if surf != None else pygame.Surface((width,height),flags=pygame.SRCALPHA)
-        self._last_angle = None
-        self._last_size = None
-        self.update_surf()
-
-    def _scale(self):
-        size = self.rect.size
-        if self._last_size != size:
-            self._scaled_image = pygame.transform.scale(self.OG_image,size)
-            self._last_size = size
-            self._last_angle = None
-    def _rotate(self):
-        if self._last_angle != self.angle:
-            self.image = pygame.transform.rotate(self._scaled_image,self.angle)
-            self._last_angle = self.angle
-    def update_surf(self):
-        """this updates the self.image so that it is the corect scale and angle"""
-        self._scale()
-        self._rotate()
-
-    def set_angle(self,new_angle:"int"):
-        """sets angle and automaticly updates the surf"""
-        self.angle = new_angle
-        self.update_surf()
-    def set_rect(self,new_rect:pygame.Rect):
-        """sets the rect and automaticly updates the surf"""
-        self.rect = new_rect
-        self.update_surf()
-    def get_pos(self) -> tuple:
-        return (self.rect.x,self.rect.y)
-    def set_pos(self,x,y):
-        self.rect.x,self.rect.y = x,y
-    def get_size(self) -> tuple:
-        return self.rect.size
-    def set_size(self,new_size):
-        """this sets the size and automaticly updates the surf"""
-        self.rect.size = new_size
-        self.update_surf()
-    def get_surf(self) -> pygame.Surface:
-        return self.image
-
-
-
 class SDL2_Display_Manager(Display_Manager):
-    def __init__(self, window_size, display_size, force_full_screen = False, window_name = "skyport-engine window", window_ico = None, resizable = True):
+    def __init__(self, window_size, display_size, force_full_screen = False, window_name = "skyport-engine window", window_ico = None, resizable = True,root_layer=None):
         self._locks = {
             "target_fps":threading.Lock(),
             "running":threading.Lock(),
             "display":threading.Lock()
         }
+        self.root_layer = root_layer if root_layer != None else Layer(display_size[0],display_size[1])
         self._user_clock = pygame.time.Clock()
         self.rendering_thread = None
         self.keybinds = {"up":{},"down":{},"buttons":{}}
@@ -259,16 +312,6 @@ class SDL2_Display_Manager(Display_Manager):
 
         self.display = pygame.Surface(display_size)
         self.__clock = pygame.time.Clock()
-        #self.window = None # video.Window(window_name,window_size,resizable=resizable)
-        #self._render = video.Renderer(self.window)
-
-        #self._display_texture = video.Texture(self._render, self._display_size)
-        #if window_ico:
-        #    self.window.set_icon(window_ico)
-        #if force_full_screen:
-        #    self.window.set_fullscreen(True) 
-
-        #self._couculate_window_scaling()
 
     def _couculate_window_scaling(self):
 
@@ -282,20 +325,17 @@ class SDL2_Display_Manager(Display_Manager):
 
     def update_window(self):
         """this manually updates the window (do not call this after starting rendering thread bc the rendering thread already dose)"""
+        self._update_root_layer()
         self.loops += 1
         with self._locks["display"]:
-            if self._display_dirty:
-                self._display_dirty = False
-                self._display_texture.update(self.display)
-                #print("logical_size:", self._render.logical_size, "viewport:", self._render.get_viewport(), "dest_rect:", self._dest_rect)
-
-                #print("renderer attrs:", [a for a in dir(self._render) if not a.startswith('_')])  # temporary, run once
+            #if self._display_dirty:
+            self._display_dirty = False
+            self._display_texture.update(self.display)
         self._render.clear()
         self._display_texture.draw(dstrect=self._dest_rect)
         self._render.present()
 
-    def _rendering_loop(self):
-
+    def _init_window(self):
         self.window = video.Window(self.window_name, self.window_size, resizable=self.resizeable_window)
         self._render = video.Renderer(self.window)
         self._display_texture = video.Texture(self._render, self._display_size)
@@ -305,11 +345,17 @@ class SDL2_Display_Manager(Display_Manager):
             self.window.set_fullscreen(True)
         self._couculate_window_scaling()
 
+    def _rendering_loop(self):
+        self._init_window()
 
         while (self.running):
-            self.update_window()
-            self.__clock.tick(self.target_fps)
-            self.event_handler()
+            self._run()
+
+    def _run(self):
+        self.update_window()
+        self.__clock.tick(self.target_fps)
+        self.event_handler()
+
 
     def blit(self, source: "pygame.Surface", dest: "pygame.RectLike" = (0, 0), area: "pygame.RectLike" = None, special_flags: "int" = 0):
         """self.display.blit(.....)"""
@@ -354,4 +400,6 @@ class SDL2_Display_Manager(Display_Manager):
         except Exception as e:
             loger.log(f"error in event handeling: {e}")
             events = []
+
+
 
