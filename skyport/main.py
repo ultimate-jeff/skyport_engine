@@ -11,32 +11,37 @@ pygame.display.set_mode((1, 1), pygame.HIDDEN)
 
 
 class Render(Class_Data):
+    def __init_texture(self,surf,width,height):
+        self.OG_image = surf if surf != None else pygame.Surface((width,height),flags=pygame.SRCALPHA)
+
     def __init__(self,x:"int",y:"int",width:"int",height:"int",angle:"int",surf:"pygame.Surface"=None):
         """this class is meant to be inherited by other classes or used in them so like class MyGameObj(Render): ...."""
         super().__init__()
         self.tags = {}
         self.rect = pygame.Rect(x,y,width,height)
         self.angle = angle
-        self.OG_image = surf if surf != None else pygame.Surface((width,height),flags=pygame.SRCALPHA)
+        self.__init_texture(surf,width,height)
         self._last_angle = None
         self._last_size = None
         self._is_dirty = False
+        self._is_dirty = True
         self.update_surf()
 
     def _scale(self):
         size = self.rect.size
-        if self._last_size != size:
+        if self._last_size != size or self._is_dirty:
             self._scaled_image = pygame.transform.scale(self.OG_image,size)
             self._last_size = size
             self._last_angle = None
     def _rotate(self):
-        if self._last_angle != self.angle:
+        if self._last_angle != self.angle or self._is_dirty:
             self.image = pygame.transform.rotate(self._scaled_image,self.angle)
             self._last_angle = self.angle
     def update_surf(self):
         """this updates the self.image so that it is the corect scale and angle"""
         self._scale()
         self._rotate()
+        self._is_dirty = False
     def set_angle(self,new_angle:"int"):
         """sets angle and automaticly updates the surf"""
         self.angle = new_angle
@@ -60,17 +65,23 @@ class Render(Class_Data):
     
     def blit(self,source: "pygame.Surface", dest: "pygame.RectLike" = (0, 0), area: "pygame.RectLike" = None, special_flags: "int" = 0):
         """blits to surf and auto updates"""
+        self._is_dirty = True
         self.OG_image.blit(source,dest,area,special_flags)
         self.update_surf()
     def fill(self,color:"tuple"=(0,0,0,0),rect:"pygame.Rect"=None,special_flags:"int"=0):
         """fills surf and auto updates"""
+        self._is_dirty = True
         self.OG_image.fill(color,rect,special_flags)
+        self.update_surf()
+    def force_update(self):
+        self._is_dirty = True
         self.update_surf()
 
 class Layer(Render):
-    def __init__(self,width:"int", height:"int" , x:"int"=0, y:"int"=0, angle:"int"=0, surf:"pygame.Surface" = None):
+    def __init__(self,width:"int", height:"int" , x:"int"=0, y:"int"=0, angle:"int"=0, surf:"pygame.Surface" = None,fill_color:"tuple"=None):
         super().__init__(x, y, width, height, angle, surf)
         self.objs = []
+        self.fill_color = fill_color if fill_color != None else (0,0,0,255) 
 
     def add_obj(self,obj):
         self.objs.append(obj)
@@ -91,10 +102,11 @@ class Layer(Render):
             return None
 
     def _update_objs(self):
+        self.OG_image.fill(self.fill_color)
         for i,obj in enumerate(self.objs):
-            obj.update()
+            obj.force_update()
             self.OG_image.blit(obj.image,obj.get_pos())
-        self.update_surf()
+        self.force_update()
 
     def update(self):
         self._update_objs()
@@ -161,7 +173,8 @@ class Display_Manager(Class_Data):
 
     def update_window(self):
         """this manually updates the window (do not call this after starting rendering thread bc the rendering thread already dose)"""
-        self._update_root_layer()
+        with self._locks["root_layer"]:
+            self._update_root_layer()
         self.loops += 1
         with self._locks["display"]:
             self._s_display = pygame.transform.scale(self.display, self._new_size)
@@ -286,13 +299,73 @@ class Display_Manager(Class_Data):
         self._remove_bind("buttons",key,func)
 
 
+def _SDL2_access(func):
+    def wrapper(self,*args,**kwargs):
+        renderer = SDL2_Render._global_render
+        prev_target = renderer.target
+        renderer.target = self._texture
+        data = func(self,*args,**kwargs,render=renderer)
+        renderer.target = prev_target
+        return data
+    return wrapper
+
+class SDL2_Render(Render):
+    _global_render = None
+    def __init_texture(self,surf,width,height):
+        #self.OG_image = surf if surf != None else pygame.Surface((width,height),flags=pygame.SRCALPHA)
+        if SDL2_Render._global_render == None:
+            raise RuntimeError("SDL_Render can't be initialized before SDL2_Display_Manager")
+        self._texture = video.Texture(SDL2_Render._global_render,(width,height),target=True)
+        if surf != None:
+            renderer = SDL2_Render._global_render
+
+            prev_target = renderer.target
+            renderer.target = self._texture
+
+            temp_tex = video.Texture.from_surface(renderer, surf)
+            temp_tex.draw()   
+
+            renderer.target = prev_target
+
+    def __init__(self,x:"int",y:"int",width:"int",height:"int",angle:"int",surf:"pygame.Surface"=None):
+        """this class is meant to be inherited by other classes or used in them so like class MyGameObj(Render): ...."""
+        super()
+        self.tags = {}
+        self.rect = pygame.Rect(x,y,width,height)
+        self.angle = angle
+        self.__init_texture(surf,width,height)
+        self._last_angle = None
+        self._last_size = None
+        self._is_dirty = False
+        self._is_dirty = True
+        self.update_surf()
+
+    def _draw_to_screen(self):
+        self._texture.draw(dstrect=self.rect,angle=self.angle)
+
+    def update_surf(self):
+        self._draw_to_screen()
+
+    @_SDL2_access
+    def blit(self, source:pygame.Surface, dest = (0, 0), area = None, special_flags = 0,render=None):
+        texture = video.Texture.from_surface(render,source)
+        texture.draw(srcrect=area,dstrect=dest)
+    @_SDL2_access
+    def fill(self, color = (0, 0, 0, 0), rect = None, special_flags = 0,render=None):
+        render.draw_color = color
+        if rect == None:
+            render.clear()
+        else:
+            render.fill_rect(pygame.Rect(rect))
+
 
 class SDL2_Display_Manager(Display_Manager):
     def __init__(self, window_size, display_size, force_full_screen = False, window_name = "skyport-engine window", window_ico = None, resizable = True,root_layer=None):
         self._locks = {
             "target_fps":threading.Lock(),
             "running":threading.Lock(),
-            "display":threading.Lock()
+            "display":threading.Lock(),
+            "root_layer":threading.Lock()
         }
         self.root_layer = root_layer if root_layer != None else Layer(display_size[0],display_size[1])
         self._user_clock = pygame.time.Clock()
@@ -325,7 +398,8 @@ class SDL2_Display_Manager(Display_Manager):
 
     def update_window(self):
         """this manually updates the window (do not call this after starting rendering thread bc the rendering thread already dose)"""
-        self._update_root_layer()
+        with self._locks["root_layer"]:
+            self._update_root_layer()
         self.loops += 1
         with self._locks["display"]:
             #if self._display_dirty:
@@ -338,6 +412,7 @@ class SDL2_Display_Manager(Display_Manager):
     def _init_window(self):
         self.window = video.Window(self.window_name, self.window_size, resizable=self.resizeable_window)
         self._render = video.Renderer(self.window)
+        SDL2_Render._global_render = self._render # enshure sdl2_render class has the _render
         self._display_texture = video.Texture(self._render, self._display_size)
         if self._window_ico:
             self.window.set_icon(self._window_ico)
