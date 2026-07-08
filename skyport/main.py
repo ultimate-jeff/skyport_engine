@@ -261,6 +261,7 @@ class Display_Manager(Class_Data):
         self.window_size = window_size
 
         self._bliting_que = [] # [(image,data,type)]
+        self._fill_que = [] # same as bliting
 
         self.display = pygame.Surface(display_size)
         self.window = pygame.display.set_mode(window_size,pygame.DOUBLEBUF | pygame.HWSURFACE | pygame.RESIZABLE if resizable else 0)
@@ -297,8 +298,6 @@ class Display_Manager(Class_Data):
         for command_type, target, arg1, arg2, arg3 in self._bliting_que:
             if command_type == "b":
                 self.display.blit(target,arg1,arg2,arg3)
-            elif command_type == "f":
-                self.display.fill(target,arg1,arg2)
             else:
                 loger.error(f"invalid blit que command {command_type}",ValueError)
 
@@ -312,6 +311,7 @@ class Display_Manager(Class_Data):
     def update_window(self):
         """this manually updates the window (do not call this after starting rendering thread bc the rendering thread already dose)"""
         with self._locks["root_layer"]:
+            #self._render_fil_que()
             self._update_root_layer()
             self._render_blit_que()
         self.loops += 1
@@ -384,7 +384,8 @@ class Display_Manager(Class_Data):
 
     def fill(self,color:"tuple"=(0,0,0,0),rect:"pygame.Rect"=None,special_flags:"int"=0):
         """self.display.fill(...)"""
-        self._bliting_que.append(("f",color,rect,special_flags,0))
+        with self._locks["display"]:
+            self.display.fill(color,rect,special_flags)
             
     def get_display(self):
         return self.display
