@@ -464,15 +464,12 @@ some of the methods as of this update are :
     - set_size : this sets the size and auto updates the surf
 
 
-## Camera:
-Note:
-    this is experimental
-The camera is a special chunk-based map renderer that can efficiently render large 2D maps (more documentation will come later).
+## Chunked_Layer:
+this has been updated but documentation will come in a later update
  
 ## Chunk:
-Note:
-    this is also experimental
-This class is used by the camera class to render large 2D maps (more documentation will come later).
+this has been updated but documentation will come in a later update
+
  
 ## SDL2_Display_Manager :
 Note:

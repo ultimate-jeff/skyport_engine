@@ -37,45 +37,55 @@ class Render(Class_Data):
         if self._last_angle != self.angle or self._is_dirty:
             self.image = pygame.transform.rotate(self._scaled_image,self.angle)
             self._last_angle = self.angle
+
     def update_surf(self):
         """this updates the self.image so that it is the corect scale and angle"""
         self._scale()
         self._rotate()
         self._is_dirty = False
+
     def set_angle(self,new_angle:"int"):
         """sets angle and automaticly updates the surf"""
         self.angle = new_angle
         self.update_surf()
+
     def set_rect(self,new_rect:pygame.Rect):
         """sets the rect and automaticly updates the surf"""
         self.rect = new_rect
         self.update_surf()
+
     def get_pos(self) -> tuple:
         return (self.rect.x,self.rect.y)
+    
     def set_pos(self,x,y):
         self.rect.x,self.rect.y = x,y
+
     def get_size(self) -> tuple:
         return self.rect.size
+    
     def set_size(self,new_size):
         """this sets the size and automaticly updates the surf"""
         self.rect.size = new_size
         self.update_surf()
+
     def get_surf(self) -> pygame.Surface:
         return self.image
     
     def blit(self,source: "pygame.Surface", dest: "pygame.RectLike" = (0, 0), area: "pygame.RectLike" = None, special_flags: "int" = 0):
         """blits to surf and auto updates"""
-        self._is_dirty = True
         self.OG_image.blit(source,dest,area,special_flags)
-        self.update_surf()
+        self.force_update()
     def fill(self,color:"tuple"=(0,0,0,0),rect:"pygame.Rect"=None,special_flags:"int"=0):
         """fills surf and auto updates"""
-        self._is_dirty = True
         self.OG_image.fill(color,rect,special_flags)
-        self.update_surf()
+        self.force_update()
+
     def force_update(self):
         self._is_dirty = True
         self.update_surf()
+
+    def update(self):
+        pass
 
 class Layer(Render):
     def __init__(self,width:"int", height:"int" , x:"int"=0, y:"int"=0, angle:"int"=0, surf:"pygame.Surface" = None,fill_color:"tuple"=None):
@@ -111,6 +121,86 @@ class Layer(Render):
     def update(self):
         self._update_objs()
 
+
+class Chunk(Layer):
+    def __init__(self, cx = 0, cy = 0, angle = 0,chunk_size=0, surf=None, fill_color=None,update_method:"callable"=None):
+        self.cx,self.cy = cx,cy
+        x,y = (cx * chunk_size),(cy * chunk_size)
+        self.update_method = update_method if update_method != None else lambda s : None
+
+        super().__init__(chunk_size, chunk_size, x, y, angle, surf, fill_color)
+
+    def gen_chunk(self,genorator:"callable"=None):
+        if genorator != None:
+            return
+        genorator(self)
+    
+    def update(self):
+        self.update_surf()
+        self.update_method(self)
+
+    
+class Chunked_Layer(Render):
+    def __init__(self, x, y, width, height, angle, surf = None,chunk_size:int=0,chunk_updateor:"callable"=None,chunk_genorator:"callable"=None,chunk_fill_color=(0,0,0)):
+        self.chunk_size = chunk_size
+        self.fill_color = chunk_fill_color
+        self._tiles = {}
+        self._chunk_genorator = chunk_genorator if chunk_genorator != None else lambda s:None
+        self._chunk_update_method = chunk_updateor if chunk_updateor != None else lambda s:None
+        super().__init__(x, y, width, height, angle, surf)
+
+    def _gen_tile(self,cx:int,cy:int):
+        tile = Chunk(cx,cy,0,self.chunk_size,update_method=self._chunk_update_method,fill_color=self.fill_color) 
+        tile.gen_chunk(self._chunk_genorator)
+        return tile
+    
+    def get_tile(self,cx:int,cy:int):
+        """returns the tile at the (cx,cy)"""
+        if (cx,cy) in self._tiles:
+            return self._tiles[(cx,cy)]
+        self._tiles[(cx,cy)] = self._gen_tile(cx,cy)
+    
+    def cpos_to_pos(self,cx:int,cy:int):
+        "converts chunk pos to normal pos"
+        return (cx*self.chunk_size,cy*self.chunk_size)
+    def pos_to_cpos(self,x,y):
+        """converts a pos to chunk pos"""
+        return (x // self.chunk_size , y // self.chunk_size)
+
+    def chunk_obj(self,obj:"Render"):
+        pos = obj.get_pos()
+        cpos = self.pos_to_cpos(pos[0],pos[1])
+        tile = self.get_tile(cpos[0],cpos[1])
+        tile.add_obj(obj)
+    
+    def re_chunk(self,cx,cy):
+        """this will remove and re chunk all obs in chunk (do not call every frame)"""
+        tile = self.get_tile(cx,cy)
+        objs = tile.objs
+        tile.objs.clear()
+        for obj in objs:
+            self.chunk_obj(obj)
+    def rechunk_all_chunks(self):
+        for cpos in self._tiles.keys():
+            self.re_chunk(cpos[0],cpos[1])
+
+    def _render_visable_chunks(self):
+        rect_x,rect_y,rect_w,rect_h = self.rect.x,self.rect.y,self.rect.width,self.rect.height
+        
+        crect_x,crect_y = self.pos_to_cpos(rect_x,rect_y)
+        crect_bx,crect_by = self.pos_to_cpos((rect_x + rect_w),(rect_y + rect_h))
+
+        for cy in range(crect_y,crect_by):
+            for cx in range(crect_x,crect_bx):
+                tile = self.get_tile(cx,cy)
+                tile.update()
+                self.OG_image.blit(tile.image,tile.get_pos())
+
+        self.force_update()
+
+    def update(self):
+        self._render_visable_chunks()
+        
 
 
 class Display_Manager(Class_Data):
@@ -310,22 +400,13 @@ def _SDL2_access(func):
     return wrapper
 
 class SDL2_Render(Render):
+    # still experimental
     _global_render = None
     def __init_texture(self,surf,width,height):
         #self.OG_image = surf if surf != None else pygame.Surface((width,height),flags=pygame.SRCALPHA)
         if SDL2_Render._global_render == None:
             raise RuntimeError("SDL_Render can't be initialized before SDL2_Display_Manager")
-        self._texture = video.Texture(SDL2_Render._global_render,(width,height),target=True)
-        if surf != None:
-            renderer = SDL2_Render._global_render
-
-            prev_target = renderer.target
-            renderer.target = self._texture
-
-            temp_tex = video.Texture.from_surface(renderer, surf)
-            temp_tex.draw()   
-
-            renderer.target = prev_target
+        
 
     def __init__(self,x:"int",y:"int",width:"int",height:"int",angle:"int",surf:"pygame.Surface"=None):
         """this class is meant to be inherited by other classes or used in them so like class MyGameObj(Render): ...."""
@@ -340,27 +421,11 @@ class SDL2_Render(Render):
         self._is_dirty = True
         self.update_surf()
 
-    def _draw_to_screen(self):
-        self._texture.draw(dstrect=self.rect,angle=self.angle)
-
-    def update_surf(self):
-        self._draw_to_screen()
-
-    @_SDL2_access
-    def blit(self, source:pygame.Surface, dest = (0, 0), area = None, special_flags = 0,render=None):
-        texture = video.Texture.from_surface(render,source)
-        texture.draw(srcrect=area,dstrect=dest)
-    @_SDL2_access
-    def fill(self, color = (0, 0, 0, 0), rect = None, special_flags = 0,render=None):
-        render.draw_color = color
-        if rect == None:
-            render.clear()
-        else:
-            render.fill_rect(pygame.Rect(rect))
 
 
 class SDL2_Display_Manager(Display_Manager):
     def __init__(self, window_size, display_size, force_full_screen = False, window_name = "skyport-engine window", window_ico = None, resizable = True,root_layer=None):
+        """this display manager uses pygames _sdl2 which is experimental so this might not work on ur pygame version (this was built with pygame-ce v2.5.7)"""
         self._locks = {
             "target_fps":threading.Lock(),
             "running":threading.Lock(),
