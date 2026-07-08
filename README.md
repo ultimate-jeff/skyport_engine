@@ -281,6 +281,12 @@ Note :
 the display manager has been mostly coverd in the getting started section but heare we will dive a bit deeper into what the Display_Manager actually can do
 ```
 
+there is an experimental feature that alows you to add a function that is called after rendering every frame 
+```python
+# this function will be called every frame after rendering everything
+display_manager.pos_render_hook = lambda self : ......
+```
+
  
 ## Loader:
 The Loader is made to pre-cache files in memory.
