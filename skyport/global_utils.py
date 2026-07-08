@@ -47,16 +47,8 @@ class Class_Data:
     def __init__(self):
         type(self).instances += 1
         self.id = type(self).instances
-    def random_function_that_dose_nuthing(self):  
-        random_msgs = (
-            "nuthing happend",
-            "you didn't miss anything",
-            "this function has one job and it's not doing it",
-            "congratulations, you called a function",
-            "404 purpos of function not found",
-            "( ⚆ _ ⚆ )  ...nuthing."
-        )
-        print(random.choice(random_msgs))
+    def random_function(self):
+        pass
 
 class Loger(Class_Data):
     def __init__(self):
@@ -92,6 +84,9 @@ class Loger(Class_Data):
                 exit(1)
     def has_logs(self):
         return (self._errors != [] and self._logs != [])
+    def print(self):
+        if self.has_logs():
+            self.output_print_data()
                 
 loger = Loger()
 
@@ -240,9 +235,11 @@ class Loader(Class_Data):
         if(path.is_absolute() ):
             return path.resolve()
         return (base_dir / path).resolve()
-    def add_new_file_handler(self,type_extension:str,handler:"examle : lambda p: open(p, "r").read()"):
+    def add_new_file_handler(self,type_extension:str,handler:"callable"):
+        """examle : sp.Load_file(lambda file_obj: file_obj.read())"""
         self.supported_types[type_extension] = handler
-    def add_new_save_file_handler(self,type_extension:str,handler:r"example : lambda p, d: json.dump(d, open(p, 'w'), indent=4)"):
+    def add_new_save_file_handler(self,type_extension:str,handler:"callable"):
+            """example : sp.Save_file(lambda f, d: json.dump(d, f, indent=4))"""
             self.supported_savers[type_extension] = handler
     def get_supported_types(self):
         return self.supported_types.keys()

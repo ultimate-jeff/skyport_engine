@@ -127,17 +127,22 @@ class Chunk(Layer):
         self.cx,self.cy = cx,cy
         x,y = (cx * chunk_size),(cy * chunk_size)
         self.update_method = update_method if update_method != None else lambda s : None
-
+        self._base_image = None
         super().__init__(chunk_size, chunk_size, x, y, angle, surf, fill_color)
 
-    def gen_chunk(self,genorator:"callable"=None):
-        if genorator != None:
+    def gen_chunk(self, genorator=None):
+        if genorator is None:
             return
         genorator(self)
+        self._base_image = self.OG_image.copy()
     
     def update(self):
-        self.update_surf()
+        self.OG_image = self._base_image.copy() 
+        for obj in self.objs:
+            obj.force_update()
+            self.OG_image.blit(obj.image, obj.get_pos())
         self.update_method(self)
+        self.force_update()
 
     
 class Chunked_Layer(Render):
@@ -147,18 +152,33 @@ class Chunked_Layer(Render):
         self._tiles = {}
         self._chunk_genorator = chunk_genorator if chunk_genorator != None else lambda s:None
         self._chunk_update_method = chunk_updateor if chunk_updateor != None else lambda s:None
+        self.camera_x = 0
+        self.camera_y = 0
         super().__init__(x, y, width, height, angle, surf)
+
+    def set_camera_pos(self,new_x,new_y):
+        self.camera_x,self.camera_y = new_x,new_y
 
     def _gen_tile(self,cx:int,cy:int):
         tile = Chunk(cx,cy,0,self.chunk_size,update_method=self._chunk_update_method,fill_color=self.fill_color) 
         tile.gen_chunk(self._chunk_genorator)
         return tile
     
-    def get_tile(self,cx:int,cy:int):
-        """returns the tile at the (cx,cy)"""
+    def get_existing_tile(self,cx,cy):
         if (cx,cy) in self._tiles:
             return self._tiles[(cx,cy)]
-        self._tiles[(cx,cy)] = self._gen_tile(cx,cy)
+    
+    def get_tile(self,cx:int,cy:int):
+        """returns the tile at the (cx,cy)"""
+        if (cx,cy) not in self._tiles:
+            self._tiles[(cx,cy)] = self._gen_tile(cx,cy)
+        return self._tiles[(cx,cy)]
+    
+    def remove_tile(self,cx,cy):
+        if (cx,cy) in self._tiles:
+            self._tiles.pop((cx,cy))
+            return
+        loger.log(f"chunk ({cx},{cy}) dose not exsist in Chunk_Layer {self.id}")
     
     def cpos_to_pos(self,cx:int,cy:int):
         "converts chunk pos to normal pos"
@@ -180,21 +200,35 @@ class Chunked_Layer(Render):
         tile.objs.clear()
         for obj in objs:
             self.chunk_obj(obj)
+
     def rechunk_all_chunks(self):
         for cpos in self._tiles.keys():
             self.re_chunk(cpos[0],cpos[1])
 
-    def _render_visable_chunks(self):
-        rect_x,rect_y,rect_w,rect_h = self.rect.x,self.rect.y,self.rect.width,self.rect.height
-        
-        crect_x,crect_y = self.pos_to_cpos(rect_x,rect_y)
-        crect_bx,crect_by = self.pos_to_cpos((rect_x + rect_w),(rect_y + rect_h))
+    def re_chunk_visable(self):
+        crect_x,crect_y,crect_bx,crect_by = self._get_render_range()
+        for cy in range(crect_y,crect_by+ 1):
+            for cx in range(crect_x,crect_bx + 1):
+                self.re_chunk(cx,cy)
 
-        for cy in range(crect_y,crect_by):
-            for cx in range(crect_x,crect_bx):
+    def _get_render_range(self):
+        rect_w,rect_h = self.rect.width,self.rect.height
+        crect_x,crect_y = self.pos_to_cpos(self.camera_x,self.camera_y)
+        crect_bx,crect_by = self.pos_to_cpos((self.camera_x + rect_w),(self.camera_y + rect_h))
+        return crect_x,crect_y,crect_bx,crect_by
+
+    def _render_visable_chunks(self):
+        self.OG_image.fill(self.fill_color)
+
+        crect_x,crect_y,crect_bx,crect_by = self._get_render_range()
+
+        #print(f"cx,cy -> {crect_x},{crect_y} :: {crect_bx},{crect_by}")
+        for cy in range(crect_y,crect_by+ 1):
+            for cx in range(crect_x,crect_bx + 1):
                 tile = self.get_tile(cx,cy)
                 tile.update()
-                self.OG_image.blit(tile.image,tile.get_pos())
+                x,y = tile.get_pos()
+                self.OG_image.blit(tile.image,(x- self.camera_x,y - self.camera_y))
 
         self.force_update()
 

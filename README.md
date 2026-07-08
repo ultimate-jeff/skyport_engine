@@ -140,7 +140,7 @@ while display_manager.running:
     # this line (\/) is not needed, but it ensures that the game loop has consistent timing (in this case at 20 ticks per second)
     display_manager.tick(tps=20)
 ```
-
+Creating the game loop is very simple.
 ## keybinds and event handler :
 there are 3 types of binds : key up , key down , key pressed 
 these you can bind any function to any of the 3 types and you can have multiple functions on 1 key 
@@ -239,7 +239,7 @@ to see how to make a Loader map go to the Loader section in the read me and in a
 ```
 
 ### how to read files with the Loader :
-the method for reading a file with the loader is loader.read
+the method for trading a file with the loader is loader.read
 ```python
 
 image = loader.read(path="my_images/file.png") # this will return the files content and in this case its a image
@@ -465,10 +465,84 @@ some of the methods as of this update are :
 
 
 ## Chunked_Layer:
-this has been updated but documentation will come in a later update
+with this u can render masive worlds without hitting a performance wall
+
+## how to use
+bc this is just a Render at hart u can use it in any spot where a Render type class can be used including in other Layer's or with in a chunk of a chunk layer 
+```python
+world = sp.Chunked_Layer(
+    x=0,
+    y=0,
+    width=DISPLAY_SIZE[0],
+    height=DISPLAY_SIZE[1],
+    angle=0, # bc this is a render u can angle this 
+    chunk_size=CHUNK_SIZE,
+    chunk_genorator=chunk_genorator, # this will be used to genorate each chunk and it will be passed in the chunks self 
+    chunk_updateor=chunk_updateor, # this function will be passed to each chunk on genoration and the chunk will call it every time the chunk is updated 
+)
+```
+other than a few things this is just a bace Render
+
+to move the camera around u will use chunk_layer.camera_x , chunk_layer.camera_y 
+```python
+world.camera_x += 5
+
+world.camera_y += 2
+```
+this will move what part of the world that will be renderd to the chunked layer .image surface 
+
+do add an Render type class you would use your chunk layers chunk_obj method which would figure out what chunk the obj belongs to then it would add the obj to that chunk
+```python
+class myclass(Render):
+    ...
+
+my_obj = myclass(peramiters)
+
+# this would put it into the chunk that the objs cords would be in
+chunk_layer.chunk_obj(my_obj)
+
+```
+if you have moving objects you might want them to not un load when the chunk layer stops updating there chunks and to do that you would want to ocasionaly re chunk a chunk 
+```python
+# this would re chunk all objs in this chunk to there corect chunk
+chunk_layer.re_chunk(cx=1,cy=2)
+```
+you can also re chunk all loaded chunks
+```python
+chunk_layer.rechunk_all_chunks()
+```
+there is also a way to rechunk only loaded chunk
+```python
+chunk_layer.re_chunk_visable()
+```
+
+chunk_layers do have a cuple of useful tools
+```python
+# this returns the chunk at the pos and if it dose not exsist it will genorate it
+chunk = chunk_layer.get_tile(cx=1,cy=5)
+
+# this will return the chunk at the chunk cords only if it already exsists
+chunk = chunk_layer.get_existing_tile(cx=1,cy=6) 
+
+#this will remove the chunk if it exsists
+chunk_layer.remove_tile(cx,cy) 
+
+# this will tell you what chunk that these cords would end up in
+chunk_pos = chunk_layer.pos_to_cpos(x=100,y=224)
+
+# this will tell u the pos of the chunk 
+pos = chunk_layer.cpos_to_pos(cx=1,cy=2)
+
+```
+
+
  
 ## Chunk:
-this has been updated but documentation will come in a later update
+the Chunk is just a modified Layer moded to be used with the Chunk_Layer class to be renderd and render other Render type class instances 
+Note :
+```md
+the chunk is not meant to be directly used
+```
 
  
 ## SDL2_Display_Manager :
