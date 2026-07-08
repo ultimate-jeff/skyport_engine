@@ -95,6 +95,9 @@ class Util(Class_Data):
     def __init__(self):
         super().__init__()
 
+    def snap_in_bounds(self,value:"int",max_value:"int",min_value:"int"):
+        return max(min(value,max_value),min_value)
+
     def dot_product(self,vec1:"tuple[int,float]",vec2:"tuple[int,float]"):
         """returns the dod product of 2 2d vectors (x,y)"""
         return vec1[0]*vec2[0] + vec1[1]*vec2[1]

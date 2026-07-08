@@ -238,15 +238,17 @@ class Chunked_Layer(Render):
 
 
 class Display_Manager(Class_Data):
-    def __init__(self,window_size:"tuple",display_size:"tuple",force_full_screen:bool=False,window_name:str="skyport-engine window",window_ico:"pygame.Surface"=None,resizable:bool=True,root_layer=None):
-        super().__init__()
-
+    def _init_locks(self):
         self._locks = {
             "target_fps":threading.Lock(),
             "running":threading.Lock(),
             "display":threading.Lock(),
-            "root_layer":threading.Lock()
+            "root_layer":threading.Lock(),
+            "bliting_que":threading.Lock()
         }
+    def __init__(self,window_size:"tuple",display_size:"tuple",force_full_screen:bool=False,window_name:str="skyport-engine window",window_ico:"pygame.Surface"=None,resizable:bool=True,root_layer=None):
+        super().__init__()
+        self._init_locks()
         self.root_layer = root_layer if root_layer != None else Layer(display_size[0],display_size[1])
         self._user_clock = pygame.time.Clock()
         self.rendering_thread = None
@@ -257,6 +259,9 @@ class Display_Manager(Class_Data):
         self.resizeable_window = resizable
         self._display_size = display_size
         self.window_size = window_size
+
+        self._bliting_que = [] # [(image,data,type)]
+
         self.display = pygame.Surface(display_size)
         self.window = pygame.display.set_mode(window_size,pygame.DOUBLEBUF | pygame.HWSURFACE | pygame.RESIZABLE if resizable else 0)
         pygame.display.set_icon(window_ico) if window_ico else None
@@ -288,6 +293,15 @@ class Display_Manager(Class_Data):
         self.mouse_pos = (((mx - self._W_pos[0]) / self._scale),((my - self._W_pos[1]) / self._scale))
         return self.mouse_pos
 
+    def _render_blit_que(self):
+        for command_type, target, arg1, arg2, arg3 in self._bliting_que:
+            if command_type == "b":
+                self.display.blit(target,arg1,arg2,arg3)
+            elif command_type == "f":
+                self.display.fill(target,arg1,arg2)
+            else:
+                loger.error(f"invalid blit que command {command_type}",ValueError)
+
     def _update_root_layer(self):
         self.root_layer.update()
         self.display.blit(
@@ -299,6 +313,7 @@ class Display_Manager(Class_Data):
         """this manually updates the window (do not call this after starting rendering thread bc the rendering thread already dose)"""
         with self._locks["root_layer"]:
             self._update_root_layer()
+            self._render_blit_que()
         self.loops += 1
         with self._locks["display"]:
             self._s_display = pygame.transform.scale(self.display, self._new_size)
@@ -365,13 +380,12 @@ class Display_Manager(Class_Data):
 
     def blit(self,source: "pygame.Surface", dest: "pygame.RectLike" = (0, 0), area: "pygame.RectLike" = None, special_flags: "int" = 0):
         """self.display.blit(.....)"""
-        with self._locks["display"]:
-            self.display.blit(source,dest,area,special_flags)
+        self._bliting_que.append(("b",source,dest,area,special_flags))
 
     def fill(self,color:"tuple"=(0,0,0,0),rect:"pygame.Rect"=None,special_flags:"int"=0):
         """self.display.fill(...)"""
-        with self._locks["display"]:
-            self.display.fill(color,rect,special_flags)
+        self._bliting_que.append(("f",color,rect,special_flags,0))
+            
     def get_display(self):
         return self.display
     def set_tfps(self,value:"int"):
