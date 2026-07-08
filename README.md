@@ -140,7 +140,7 @@ while display_manager.running:
     # this line (\/) is not needed, but it ensures that the game loop has consistent timing (in this case at 20 ticks per second)
     display_manager.tick(tps=20)
 ```
-Creating the game loop is very simple.
+
 ## keybinds and event handler :
 there are 3 types of binds : key up , key down , key pressed 
 these you can bind any function to any of the 3 types and you can have multiple functions on 1 key 
@@ -239,7 +239,7 @@ to see how to make a Loader map go to the Loader section in the read me and in a
 ```
 
 ### how to read files with the Loader :
-the method for trading a file with the loader is loader.read
+the method for reading a file with the loader is loader.read
 ```python
 
 image = loader.read(path="my_images/file.png") # this will return the files content and in this case its a image
