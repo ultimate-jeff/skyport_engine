@@ -33,7 +33,7 @@ prin_VIOLET = '\033[38;5;93m'
 prin_SALMON = '\033[38;5;209m'
 prin_DARK_GREEN = '\033[38;5;22m'
 
-__version__ = "0.2.16"
+__version__ = "0.2.17"
 
 from .global_utils import (
     Loader,

@@ -91,7 +91,7 @@ class Layer(Render):
     def __init__(self,width:"int", height:"int" , x:"int"=0, y:"int"=0, angle:"int"=0, surf:"pygame.Surface" = None,fill_color:"tuple"=None):
         super().__init__(x, y, width, height, angle, surf)
         self.objs = []
-        self.fill_color = fill_color if fill_color != None else (0,0,0,255) 
+        self.fill_color = fill_color if fill_color != None else (0,0,0,0) 
 
     def add_obj(self,obj):
         self.objs.append(obj)
@@ -115,7 +115,8 @@ class Layer(Render):
         self.OG_image.fill(self.fill_color)
         for i,obj in enumerate(self.objs):
             obj.force_update()
-            self.OG_image.blit(obj.image,obj.get_pos())
+            img_rect = obj.image.get_rect(center=obj.rect.center)
+            self.OG_image.blit(obj.image,img_rect)
         self.force_update()
 
     def update(self):
@@ -243,12 +244,12 @@ class Display_Manager(Class_Data):
             "running":threading.Lock(),
             "display":threading.Lock(),
             "root_layer":threading.Lock(),
-            "bliting_que":threading.Lock()
+            "update":threading.Lock()
         }
-    def __init__(self,window_size:"tuple",display_size:"tuple",force_full_screen:bool=False,window_name:str="skyport-engine window",window_ico:"pygame.Surface"=None,resizable:bool=True,root_layer=None,pos_render_hook=None):
+    def __init__(self,window_size:"tuple",display_size:"tuple",force_full_screen:bool=False,window_name:str="skyport-engine window",window_ico:"pygame.Surface"=None,resizable:bool=True,root_layer=None,post_render_hook=None,pre_render_hook=None):
         super().__init__()
         self._init_locks()
-        self.root_layer = root_layer if root_layer != None else Layer(display_size[0],display_size[1])
+        self.root_layer = root_layer if root_layer != None else Layer(display_size[0],display_size[1],fill_color=(0,0,0,0))
         self._user_clock = pygame.time.Clock()
         self.rendering_thread = None
         self.keybinds = {"up":{},"down":{},"buttons":{}}
@@ -260,7 +261,8 @@ class Display_Manager(Class_Data):
         self.window_size = window_size
 
         self.update__root_layers = True
-        self.pos_render_hook = pos_render_hook
+        self.post_render_hook = post_render_hook
+        self.pre_render_hook = pre_render_hook
 
         self.display = pygame.Surface(display_size)
         self.window = pygame.display.set_mode(window_size,pygame.DOUBLEBUF | pygame.HWSURFACE | pygame.RESIZABLE if resizable else 0)
@@ -303,16 +305,19 @@ class Display_Manager(Class_Data):
 
     def update_window(self):
         """this manually updates the window (do not call this after starting rendering thread bc the rendering thread already dose)"""
-        if self.update__root_layers:
-            with self._locks["root_layer"]:
+        with self._locks["update"]:
+            self.loops += 1
+            if self.pre_render_hook:
+                self.pre_render_hook(self)
+            if self.update__root_layers:
+                #with self._locks["root_layer"]:
                 self.update_root_layer()
-        self.loops += 1
-        if self.pos_render_hook:
-            self.pos_render_hook(self)
-        with self._locks["display"]:
+            if self.post_render_hook:
+                self.post_render_hook(self)
+            #with self._locks["display"]:
             self._s_display = pygame.transform.scale(self.display, self._new_size)
-        self.window.blit(self._s_display,self._W_pos)
-        pygame.display.flip()
+            self.window.blit(self._s_display,self._W_pos)
+            pygame.display.flip()
 
     def _rendering_loop(self):
         self.window = self.window = pygame.display.get_surface() #pygame.display.set_mode(self.window_size,pygame.DOUBLEBUF | pygame.HWSURFACE | pygame.RESIZABLE)
@@ -374,15 +379,19 @@ class Display_Manager(Class_Data):
 
     def blit(self,source: "pygame.Surface", dest: "pygame.RectLike" = (0, 0), area: "pygame.RectLike" = None, special_flags: "int" = 0):
         """self.display.blit(.....)"""
-        #self._bliting_que.append(("b",source,dest,area,special_flags))
-        with self._locks["display"]:
+        #with self._locks["display"]:
+        try:
             self.display.blit(source,dest,area,special_flags)
+        except Exception as e:
+            loger.error(f"failed to blit surf to display due to {e}")
 
     def fill(self,color:"tuple"=(0,0,0,0),rect:"pygame.Rect"=None,special_flags:"int"=0):
         """self.display.fill(...)"""
-        with self._locks["display"]:
+        #with self._locks["display"]:
+        try:
             self.display.fill(color,rect,special_flags)
-        #self._fill_que.append(("f",color,rect,special_flags))
+        except Exception as e:
+            loger.error(f"failed to fill display withg {color} due to {e}")
             
     def get_display(self):
         return self.display
