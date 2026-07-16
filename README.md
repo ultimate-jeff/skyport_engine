@@ -181,7 +181,16 @@ while display_manager.running:
     clock.tick(20) # <-tps
 ```
 ### joysticks and gamepad and other input methods :
-support for more input methods will come if future updates
+skyport will automaticly handle adding and removing of joysticks / controlors 
+
+to add a bind to a joystick button its just like keybinds but the function you pass in needs take in 1 peramiter of the controlor id 
+
+```python
+display_manager.add_joy_button_down_bind(button_index=9,funcs=lambda joy_index : ... )
+```
+and then removing a joystick bind is the same as removing a keybind
+
+more controlor joystick support will come later
 
 ## bliting and filling of the window :
 note :

@@ -6,6 +6,7 @@ from skyport.global_utils import *
 from pygame import _sdl2 as video
 
 pygame.display.init()
+pygame.joystick.init()
 pygame.display.set_mode((1, 1), pygame.HIDDEN)
 
 
@@ -115,6 +116,7 @@ class Layer(Render):
         self.OG_image.fill(self.fill_color)
         for i,obj in enumerate(self.objs):
             obj.force_update()
+            obj.update()
             img_rect = obj.image.get_rect(center=obj.rect.center)
             self.OG_image.blit(obj.image,img_rect)
         self.force_update()
@@ -238,7 +240,7 @@ class Chunked_Layer(Render):
 
 
 class Display_Manager(Class_Data):
-    def _init_locks(self):
+    def _base_init(self):
         self._locks = {
             "target_fps":threading.Lock(),
             "running":threading.Lock(),
@@ -246,13 +248,21 @@ class Display_Manager(Class_Data):
             "root_layer":threading.Lock(),
             "update":threading.Lock()
         }
+        self.keybinds = {
+            "up":{},
+            "down":{},
+            "buttons":{},
+            "joy_button_up":{},
+            "joy_button_down":{}
+            }
+        self.joysticks = []
+
     def __init__(self,window_size:"tuple",display_size:"tuple",force_full_screen:bool=False,window_name:str="skyport-engine window",window_ico:"pygame.Surface"=None,resizable:bool=True,root_layer=None,post_render_hook=None,pre_render_hook=None):
         super().__init__()
-        self._init_locks()
+        self._base_init()
         self.root_layer = root_layer if root_layer != None else Layer(display_size[0],display_size[1],fill_color=(0,0,0,0))
         self._user_clock = pygame.time.Clock()
         self.rendering_thread = None
-        self.keybinds = {"up":{},"down":{},"buttons":{}}
         self.loops = 0
         self.target_fps = 60
         self.running = False
@@ -341,9 +351,9 @@ class Display_Manager(Class_Data):
             self.rendering_thread.join() 
         loger.log("Rendering thread stopped")
 
-    def _exacute_funcs(self,funcs):
+    def _exacute_funcs(self,funcs,*peramiters):
         for func in funcs:
-            func()
+            func(*peramiters)
 
     def _handle_buttons_keybinds(self):
         buttons = pygame.key.get_pressed()
@@ -351,13 +361,28 @@ class Display_Manager(Class_Data):
         for bind, funcs in binds.items():
             if buttons[bind]:
                 self._exacute_funcs(funcs)
+    def _handle_joystick_buttons(self,binds):
+        for i,joy in enumerate(self.joysticks):
+            for bind , funcs in binds:
+                if joy.get_button(bind):
+                    self._exacute_funcs(funcs,i)
+
 
     def event_handler(self):
         """you will need to call this in your game loop to handle input events like window resizing or keybinds"""
         try:
             self._handle_buttons_keybinds()
+            if self.joysticks:
+                self._handle_joystick_buttons(self.keybinds["joy_button_down"])
+                self._handle_joystick_buttons(self.keybinds["joy_button_up"])
             events = pygame.event.get()
             for event in events:
+                if event.type == pygame.KEYDOWN:
+                    funcs = self.keybinds["down"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keydonw)")])
+                    self._exacute_funcs(funcs)
+                if event.type == pygame.KEYUP:
+                    funcs = self.keybinds["up"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keyup)")])
+                    self._exacute_funcs(funcs)
                 if event.type == pygame.QUIT:
                     self.running = False
                     print("\nquit pressed\n")
@@ -367,12 +392,9 @@ class Display_Manager(Class_Data):
                     print(event.size)
                     self._couculate_window_scaling()
                     self.window.fill((0,0,0))
-                if event.type == pygame.KEYDOWN:
-                    funcs = self.keybinds["down"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keydonw)")])
-                    self._exacute_funcs(funcs)
-                if event.type == pygame.KEYUP:
-                    funcs = self.keybinds["up"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keyup)")])
-                    self._exacute_funcs(funcs)
+                if event.type == pygame.JOYDEVICEADDED:
+                    joy = pygame.joystick.Joystick(event.device_index)
+                    self.joysticks.append(joy)
         except Exception as e:
             loger.log(f"error in event handeling: {e}")
             events = []
@@ -421,6 +443,12 @@ class Display_Manager(Class_Data):
         self._add_bind("down",key,func)
     def add_keypressed_bind(self,key:"int",func:"function"):
         self._add_bind("buttons",key,func)
+    def add_joy_button_down_bind(self,button_index:"int",func:"function"):
+        """Note the functions must be able to take 1 peramiter of the joystick id"""
+        self._add_bind("joy_button_down",button_index,func)
+    def add_joy_button_up_bind(self,button_index:"int",func:"function"):
+        """Note the functions must be able to take 1 peramiter of the joystick id"""
+        self._add_bind("joy_button_up",button_index,func)
 
     def _remove_bind(self,_type,key,funcs):
         funcs = funcs if isinstance(funcs,(tuple,list)) else [funcs]
@@ -442,7 +470,10 @@ class Display_Manager(Class_Data):
         self._remove_bind("down",key,func)
     def remove_keypressed_bind(self,key:"int",func:"function"):
         self._remove_bind("buttons",key,func)
-
+    def remove_joy_button_down_bind(self,button_index,func:"function"):
+        self._remove_bind("joy_button_down",button_index,func)
+    def remove_joy_button_up_bind(self,button_index,func:"function"):
+        self._remove_bind("joy_button_up",button_index,func)
 
 
 def _SDL2_access(func):
@@ -480,16 +511,9 @@ class SDL2_Render(Render):
 class SDL2_Display_Manager(Display_Manager):
     def __init__(self, window_size, display_size, force_full_screen = False, window_name = "skyport-engine window", window_ico = None, resizable = True,root_layer=None):
         """this display manager uses pygames _sdl2 which is experimental so this might not work on ur pygame version (this was built with pygame-ce v2.5.7)"""
-        self._locks = {
-            "target_fps":threading.Lock(),
-            "running":threading.Lock(),
-            "display":threading.Lock(),
-            "root_layer":threading.Lock()
-        }
         self.root_layer = root_layer if root_layer != None else Layer(display_size[0],display_size[1])
         self._user_clock = pygame.time.Clock()
         self.rendering_thread = None
-        self.keybinds = {"up":{},"down":{},"buttons":{}}
         self.loops = 0
         self.target_fps = 60
         self.running = False
@@ -503,6 +527,8 @@ class SDL2_Display_Manager(Display_Manager):
         self.resizeable_window = resizable
         self._display_size = display_size
         self.window_size = window_size
+
+        self._base_init()
 
         self.display = pygame.Surface(display_size)
         self.__clock = pygame.time.Clock()

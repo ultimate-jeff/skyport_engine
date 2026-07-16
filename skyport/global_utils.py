@@ -121,8 +121,9 @@ class Util(Class_Data):
         new_y = min(max(y,min_y),max_y-1)
         return new_x,new_y
     def couculate_dx_dy(self,dist:"int",angle:"float"):
-        dx = dist * math.cos(angle)
-        dy = dist * math.sin(angle)
+        rad = math.radians(angle)
+        dx = dist * math.cos(rad)
+        dy = dist * math.sin(rad)
         return dx,dy
     def couculate_angle_dist(self,dx:"int",dy:"int"):
         speed = math.sqrt(dx**2 + dy**2)
