@@ -24,7 +24,6 @@ class Render(Class_Data):
         self.__init_texture(surf,width,height)
         self._last_angle = None
         self._last_size = None
-        self._is_dirty = False
         self._is_dirty = True
         self.update_surf()
 
@@ -39,8 +38,9 @@ class Render(Class_Data):
             self.image = pygame.transform.rotate(self._scaled_image,self.angle)
             self._last_angle = self.angle
 
-    def update_surf(self):
+    def update_surf(self,forced=False):
         """this updates the self.image so that it is the corect scale and angle"""
+        self._is_dirty |=  forced
         self._scale()
         self._rotate()
         self._is_dirty = False
@@ -74,16 +74,17 @@ class Render(Class_Data):
     
     def blit(self,source: "pygame.Surface", dest: "pygame.RectLike" = (0, 0), area: "pygame.RectLike" = None, special_flags: "int" = 0):
         """blits to surf and auto updates"""
+        self._is_dirty = True
         self.OG_image.blit(source,dest,area,special_flags)
-        self.force_update()
+        #self.update_surf(True)
     def fill(self,color:"tuple"=(0,0,0,0),rect:"pygame.Rect"=None,special_flags:"int"=0):
         """fills surf and auto updates"""
+        self._is_dirty = True
         self.OG_image.fill(color,rect,special_flags)
-        self.force_update()
+        #self.update_surf(True)
 
     def force_update(self):
-        self._is_dirty = True
-        self.update_surf()
+        self.update_surf(True)
 
     def update(self):
         pass
@@ -95,6 +96,8 @@ class Layer(Render):
         self.fill_color = fill_color if fill_color != None else (0,0,0,0) 
 
     def add_obj(self,obj):
+        if obj == self:
+            loger.error(f"cannot add self to self")
         self.objs.append(obj)
     def remove_obj(self,obj):
         if obj in self.objs:
@@ -115,11 +118,11 @@ class Layer(Render):
     def _update_objs(self):
         self.OG_image.fill(self.fill_color)
         for i,obj in enumerate(self.objs):
-            obj.force_update()
+            obj.update_surf(True)
             obj.update()
             img_rect = obj.image.get_rect(center=obj.rect.center)
             self.OG_image.blit(obj.image,img_rect)
-        self.force_update()
+        self.update_surf(True)
 
     def update(self):
         self._update_objs()
@@ -142,13 +145,13 @@ class Chunk(Layer):
     def update(self):
         self.OG_image = self._base_image.copy() 
         for obj in self.objs:
-            obj.force_update()
+            obj.update_surf(True)
             self.OG_image.blit(obj.image, obj.get_pos())
         self.update_method(self)
-        self.force_update()
+        self.update_surf(True)
     
 class Chunked_Layer(Render):
-    def __init__(self, x, y, width, height, angle, surf = None,chunk_size:int=0,chunk_updateor:"callable"=None,chunk_genorator:"callable"=None,chunk_fill_color=(0,0,0)):
+    def __init__(self, x, y, width, height, angle=0, surf = None,chunk_size:int=0,chunk_updateor:"callable"=None,chunk_genorator:"callable"=None,chunk_fill_color=(0,0,0)):
         self.chunk_size = chunk_size
         self.fill_color = chunk_fill_color
         self._tiles = {}
@@ -160,11 +163,6 @@ class Chunked_Layer(Render):
 
     def set_camera_pos(self,new_x,new_y):
         self.camera_x,self.camera_y = new_x,new_y
-
-    def _gen_tile(self,cx:int,cy:int):
-        tile = Chunk(cx,cy,0,self.chunk_size,update_method=self._chunk_update_method,fill_color=self.fill_color) 
-        tile.gen_chunk(self._chunk_genorator)
-        return tile
     
     def get_existing_tile(self,cx,cy):
         if (cx,cy) in self._tiles:
@@ -173,7 +171,9 @@ class Chunked_Layer(Render):
     def get_tile(self,cx:int,cy:int):
         """returns the tile at the (cx,cy)"""
         if (cx,cy) not in self._tiles:
-            self._tiles[(cx,cy)] = self._gen_tile(cx,cy)
+            tile = tile = Chunk(cx,cy,0,self.chunk_size,update_method=self._chunk_update_method,fill_color=self.fill_color) 
+            self._tiles[(cx,cy)] = tile
+            tile.gen_chunk(self._chunk_genorator)
         return self._tiles[(cx,cy)]
     
     def remove_tile(self,cx,cy):
@@ -190,10 +190,12 @@ class Chunked_Layer(Render):
         return (x // self.chunk_size , y // self.chunk_size)
 
     def chunk_obj(self,obj:"Render"):
+        if obj == self:
+            loger.error(f"cannot chunk obj self into self")
         pos = obj.get_pos()
         cpos = self.pos_to_cpos(pos[0],pos[1])
         tile = self.get_tile(cpos[0],cpos[1])
-        tile.add_obj(obj)
+        tile.objs.append(obj)
     
     def re_chunk(self,cx,cy):
         """this will remove and re chunk all obs in chunk (do not call every frame)"""
@@ -229,10 +231,10 @@ class Chunked_Layer(Render):
             for cx in range(crect_x,crect_bx + 1):
                 tile = self.get_tile(cx,cy)
                 tile.update()
-                x,y = tile.get_pos()
+                x,y = tile.rect.x,tile.rect.y
                 self.OG_image.blit(tile.image,(x- self.camera_x,y - self.camera_y))
 
-        self.force_update()
+        self.update_surf(True)
 
     def update(self):
         self._render_visable_chunks()
@@ -308,23 +310,24 @@ class Display_Manager(Class_Data):
     def update_root_layer(self):
         """this updates the rood layer but do not call unless you set update__root_layers to False and want to manualy manage Render updating """
         self.root_layer.update()
+        rect = self.root_layer.rect
         self.display.blit(
-            self.root_layer.get_surf(),
-            self.root_layer.get_pos()
+            self.root_layer.image,
+            (rect.x,rect.y)
         )
 
     def update_window(self):
         """this manually updates the window (do not call this after starting rendering thread bc the rendering thread already dose)"""
         with self._locks["update"]:
             self.loops += 1
+
             if self.pre_render_hook:
                 self.pre_render_hook(self)
             if self.update__root_layers:
-                #with self._locks["root_layer"]:
                 self.update_root_layer()
             if self.post_render_hook:
                 self.post_render_hook(self)
-            #with self._locks["display"]:
+
             self._s_display = pygame.transform.scale(self.display, self._new_size)
             self.window.blit(self._s_display,self._W_pos)
             pygame.display.flip()

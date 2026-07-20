@@ -1,6 +1,7 @@
 
 import inspect
 import os
+import sys
 import pathlib as pl
 import json
 import csv
@@ -12,7 +13,7 @@ import time
 import random
 
 import pygame
-
+sys.setrecursionlimit(1500) 
 
 pygame.init()
 
