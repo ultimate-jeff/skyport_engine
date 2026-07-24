@@ -15,10 +15,10 @@ class Render(Class_Data):
     def __init_texture(self,surf,width,height):
         self.OG_image = surf if surf != None else pygame.Surface((width,height),flags=pygame.SRCALPHA)
 
-    def __init__(self,x:"int",y:"int",width:"int",height:"int",angle:"int",surf:"pygame.Surface"=None):
+    def __init__(self,x:"int",y:"int",width:"int",height:"int",angle:"int",surf:"pygame.Surface"=None,tags:dict={}):
         """this class is meant to be inherited by other classes or used in them so like class MyGameObj(Render): ...."""
         super().__init__()
-        self.tags = {}
+        self.tags = tags
         self.rect = pygame.Rect(x,y,width,height)
         self.angle = angle
         self.__init_texture(surf,width,height)
@@ -239,6 +239,57 @@ class Chunked_Layer(Render):
     def update(self):
         self._render_visable_chunks()
         
+class Font_Render(Render):
+    Sys_fonts = pygame.font.get_fonts()
+    def __init__(self,font:"pygame.font.Font", text:str ,x:"int", y:"int", width:"int", height:"int",text_color:"tuple"=(0,0,0),font_size:"int"=50, angle:"int"=0,tags:dict={},word_wrapping:bool=True,bg_color:"tuple"=(0,0,0,0)):
+        self.text = text
+        self.text_color = text_color
+        self._last_text = None
+        self.font = font
+        self.word_wrapping = word_wrapping
+        self.bg_color = bg_color
+        super().__init__(x=x, y=y, width=width, height=height, angle=angle,tags=tags)
+        self.update_text()
+
+    def _word_wrapping_text_render(self):
+        self.OG_image.fill(self.bg_color)
+        collection = [word.split(" ") for word in self.text.splitlines()]
+        space = self.font.size(' ')[0]
+        #wh = self.font.get_height()
+
+        self.OG_image = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
+        self.OG_image.fill(self.bg_color)
+
+        x,y = 0,0
+        for line in collection:
+            for word in line:
+                w_surf = self.font.render(word,True,self.text_color)
+                ww,wh = w_surf.get_size()
+                if x + ww >= self.rect.width:
+                    x = 0
+                    y += wh
+                self.OG_image.blit(w_surf,(x,y))
+                x += ww + space
+            x = 0
+            y += wh
+
+    def update_text(self):
+        if self._last_text != self.text:
+            if self.word_wrapping:
+                self._word_wrapping_text_render()
+            else:
+                self.OG_image = self.font.render(self.text,True,self.text_color,self.bg_color)
+            self._is_dirty = True
+            self._last_text = self.text
+
+    def update_surf(self,forced=False):
+            """this updates the self.image so that it is the corect scale and angle"""
+            self._is_dirty |=  forced
+            self.update_text()
+            self._scale()
+            self._rotate()
+            self._is_dirty = False
+
 
 
 class Display_Manager(Class_Data):

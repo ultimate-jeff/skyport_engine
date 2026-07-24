@@ -49,7 +49,7 @@ REZ_DCI_4K = (4096,2160)
 REZ_5K = (5120,2880)
 REZ_8K = (7680,4320)
 
-__version__ = "0.2.20"
+__version__ = "0.2.21"
 
 from .global_utils import (
     Loader,
@@ -66,7 +66,8 @@ from .main import (
     Layer,
     SDL2_Display_Manager,
     Chunk,
-    Chunked_Layer
+    Chunked_Layer,
+    Font_Render
     )
 
 def _set_recursion_depth(depth=1500):

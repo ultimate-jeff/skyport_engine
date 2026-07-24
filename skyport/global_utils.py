@@ -48,6 +48,7 @@ class Class_Data:
     def __init__(self):
         type(self).instances += 1
         self.id = type(self).instances
+        self.tags = {}
     def random_function(self):
         pass
 

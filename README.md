@@ -482,7 +482,7 @@ some of the methods as of this update are :
 ## Chunked_Layer:
 with this u can render masive worlds without hitting a performance wall
 
-## how to use
+### how to use
 bc this is just a Render at hart u can use it in any spot where a Render type class can be used including in other Layer's or with in a chunk of a chunk layer 
 ```python
 world = sp.Chunked_Layer(
@@ -558,8 +558,23 @@ Note :
 ```md
 the chunk is not meant to be directly used
 ```
+## Font_Render:
+this is a render that renders text
+so you can use it just like a normal Render but it auto renders text
+```python
+font = pygame.font.SysFont("arial", 22)
 
- 
+my_text = sp.Font_Render(
+    font=font,
+    text="my msg",
+    x=350, y=20, width=400, height=40,
+    text_color=(255, 255, 0),
+    word_wrapping=False,
+    bg_color=(100,100,100)
+)
+```
+if word wrapping is True then the text will wrapp to stay with in the rect of the Render
+
 ## SDL2_Display_Manager :
 Note:
     this is experimental and might not work on your OS and some features might be broken 
