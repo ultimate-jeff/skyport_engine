@@ -49,7 +49,7 @@ REZ_DCI_4K = (4096,2160)
 REZ_5K = (5120,2880)
 REZ_8K = (7680,4320)
 
-__version__ = "0.2.21"
+__version__ = "0.2.22"
 
 from .global_utils import (
     Loader,
@@ -69,6 +69,7 @@ from .main import (
     Chunked_Layer,
     Font_Render
     )
+from . import decorators
 
 def _set_recursion_depth(depth=1500):
     from global_utils import sys

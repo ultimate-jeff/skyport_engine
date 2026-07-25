@@ -15,6 +15,7 @@ skyport is a 2D game engine built on pygame-ce that simplifies tasks like managi
 ## Table of Contents
 - Data : (like links or other data)
 - getting started : (like a tutorial on how to use skyport)
+- examples : (this would hold examples and code snipits)
 - Content : (like all classes in skyport_engine)
 - dev_info : (like email ...)
 
@@ -223,6 +224,8 @@ display_manager.update_window() # update window so what was just blitted to the 
 display_manager.START_RENDERING_THREAD(fps=60) # the rendering gthread automatically handles updating the display so after you start the rendering thread you should not call update_window()
 #... game loop \/
 ```
+
+
 ## how to use the Loader :
 note :
 ```text
@@ -280,6 +283,63 @@ loader.save(img,"my_images/new_img.jpeg")
 
 ## more will come ...
 as of the current version the documentation on how to get started with skyport is not complete and will be in later updates
+
+# examples :
+
+## example 1 basic code :
+```python
+import skyport as sp
+pygame = sp.pygame
+
+dm = sp.Display_Manager(
+    window_size=(500,500),
+    display_size=sp.REZ_1080p,
+    window_name="example 1 basic code"
+)
+
+class Box(sp.Render):
+    def __init__(self, x, y, size, color):
+        surf = pygame.Surface((size, size))
+        surf.fill(color)
+        super().__init__(x, y, size, size, angle=0, surf=surf)
+
+box = Box(100, 100, 64, (200, 50, 50))
+
+dm.root_layer.add_obj(box)  # <- this is what makes it show up on screen
+
+dm.START_RENDERING_THREAD(fps=60)
+while dm.running:
+
+    dm.event_handler()
+    dm.tick(tps=60)
+
+```
+in this example there is a class which inherits from the Render class so it can be renderd through skyport-engines renering pipeline
+
+
+## enample 2 layer basics
+```python
+ui_layer = sp.Layer(width=800, height=600)
+ui_menue_layer = sp.Layer(width=100,height=600)
+
+ui_layer.add_obj(ui_menue_layer) # you can put a Layer inside of a Layer because a Layer inherits from the Render class
+
+world_layer = sp.Layer(width=800, height=600)
+
+
+world_layer.add_obj(box)
+ui_layer.add_obj(Box(10, 10, 32, (255, 255, 0)))  # (a health icon)
+
+
+# to get a layer renderd you need to add it to the root_layer 
+dm.root_layer.add_obj(world_layer)
+# layers added after previos layers will be on top of the layer added before
+dm.root_layer.add_obj(ui_layer)
+```
+
+## more will come :
+more examples will come in later updates
+
 
 # Content :
 
@@ -439,6 +499,29 @@ the Render class would just automatically handle image scaling and rotating
 Note
     most of the time image updating is automatic when you use set_angle or set_size but if you mod the OG image you will have to call my_class_instance.update_image() for it to update (this might change in a later update)
 
+### Render binds:
+each render can have binds like a button 
+
+to add a bind to a Render type obj you go 
+```python
+my_render.add_bind(event=pygame.MOUSEBUTTONDOWN,button=1,func=[func1...])
+
+```
+just like binds with the Display_Manager you dont have to pass in a list/tuple of functions you can also just pass in 1 function 
+
+these binds are applied only to the Render type obj you apply them to and all functions you pass in need to take in 2 peramiters self and event (event is the standard pygame event that you would get from the event handler)
+
+#### how do do a GUI button:
+to do a GUI button you will add a Render bind to ur render intance with a function that would detect if the Renders rect is coliding with the mouse
+```python
+def on_clik(self,event):
+    if self.rect.collidepoint(display_manager.mouse_pos):
+        print(f"render {self.id} was clicked")
+
+my_render_instance.add_bind(event=pygame.MOUSEBUTTONDOWN,,button=1,funt=on_click)
+```
+now when the mouse clicks on this Render instance it will print the data
+
 ## Layer :
 the layer can hold many objs that inherit the from Render class and then it will automaticly render them to the display every frame and it will call the update function of the Render class every frame 
 
@@ -588,6 +671,39 @@ other Note :
 the sdl2 display manager is not complete and has a lot of bugs like auto keybinds dont work and others so if you manage to fix any or just find some you can email me about them and if you can provide a potential fix plz do 
 ```
 
+## decorators :
+skyport-engine has a few built in decorators which might be useful such as
+- Button(get_mouse_pos_func)
+- Once()
+- Save_file
+- Load_file
+
+
+each decorator should say in the IDE a bit about it but in case you don't have an IDE which does that here is a bit of data on each of the decorators
+
+
+Note: the only 2 decorators that are not in skyport.decorators is Load_file and Save_file because they are part of the Loader
+
+
+### Button :
+this decorator is meant to be used with Render type classes (classes which inherit from the Render class or just the Render class)
+
+
+if you decorate your function with this decorator your function will only execute when the mouse is over the rect of the Render type class but because this decorator is built for the Render class your function has to accept two parameters self (the class instance) and event (the pygame event that triggered the call of your function)
+```python
+@skyport.decorators.Button(display_manager.get_mouse_pos)
+def my_func(self,event):
+    ...
+```
+Note : make sure that you pass in the get_mouse_pos function into this decorator
+### Once :
+this decorator will allow your function to be called once per instance
+``` python
+@skyport.decorators.Once
+def my_func():
+    ...
+# now this function can only be called once per class instance
+```
 
 # dev_info:
 email: matthew.le.robins+proj@gmail.com

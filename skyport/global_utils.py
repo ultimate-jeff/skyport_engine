@@ -42,7 +42,6 @@ prin_VIOLET = '\033[38;5;93m'
 prin_SALMON = '\033[38;5;209m'
 prin_DARK_GREEN = '\033[38;5;22m'
 
-
 class Class_Data:
     instances = 0
     def __init__(self):
@@ -50,7 +49,18 @@ class Class_Data:
         self.id = type(self).instances
         self.tags = {}
     def random_function(self):
-        pass
+        import skyport as sp
+
+        dm = sp.Display_Manager(
+            window_size=sp.REZ_SVGA,
+            display_size=sp.REZ_1080p,
+            window_name="this is the random function"
+        )
+        dm.START_RENDERING_THREAD(60)
+        while dm.running:
+
+            dm.event_handler()
+            dm.tick(20)
 
 class Loger(Class_Data):
     def __init__(self):

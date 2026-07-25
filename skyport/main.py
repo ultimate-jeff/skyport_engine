@@ -7,11 +7,21 @@ from pygame import _sdl2 as video
 
 pygame.display.init()
 pygame.joystick.init()
+pygame.font.init()
 pygame.display.set_mode((1, 1), pygame.HIDDEN)
 
 
-
 class Render(Class_Data):
+    #Button_Decorator = staticmethod(Button_Decorator)
+    def _base_init(self):
+        self.events = {
+            pygame.KEYDOWN:{}, # key:[funcs(self,event)...] 
+            pygame.KEYUP:{},
+            "key_pressed":{}, # key:[funcs(self,event)...]
+            pygame.MOUSEBUTTONDOWN:{}, # key:[funcs(self,event)...]
+            pygame.MOUSEBUTTONUP:{},
+            "mouse_pressed":{} # key:[funcs(self,event)...]
+            }
     def __init_texture(self,surf,width,height):
         self.OG_image = surf if surf != None else pygame.Surface((width,height),flags=pygame.SRCALPHA)
 
@@ -19,6 +29,7 @@ class Render(Class_Data):
         """this class is meant to be inherited by other classes or used in them so like class MyGameObj(Render): ...."""
         super().__init__()
         self.tags = tags
+        self._base_init()
         self.rect = pygame.Rect(x,y,width,height)
         self.angle = angle
         self.__init_texture(surf,width,height)
@@ -26,6 +37,34 @@ class Render(Class_Data):
         self._last_size = None
         self._is_dirty = True
         self.update_surf()
+
+    def _handle_events(self,events):
+        for event in events:
+            if event.type in self.events:
+                sub_dict = self.events[event.type]
+                lookup_key = getattr(event, 'key', getattr(event, 'button', None))
+                if lookup_key in sub_dict:
+                    for func in sub_dict[lookup_key]:
+                        func(self, event)
+
+    def add_bind(self, event, button, func):
+        if event not in self.events:
+            loger.error(f"Render type class dose not yet support events of that type , error in {type(self)} with id of {self.id}")
+            return
+        sub_container = self.events[event]
+
+        if isinstance(sub_container, list):
+            if isinstance(func, (list, tuple)):
+                sub_container.extend(func)
+            else:
+                sub_container.append(func)
+            return
+        if button not in sub_container:
+            sub_container[button] = []
+        if isinstance(func, (list, tuple)):
+            sub_container[button].extend(func)
+        else:
+            sub_container[button].append(func)
 
     def _scale(self):
         size = self.rect.size
@@ -86,6 +125,9 @@ class Render(Class_Data):
     def force_update(self):
         self.update_surf(True)
 
+    def _update_(self,events):
+        self._handle_events(events)
+
     def update(self):
         pass
 
@@ -115,18 +157,23 @@ class Layer(Render):
             loger.log(f"index {index} not in Layer {self.id}'s list")
             return None
 
-    def _update_objs(self):
+    def _update_objs(self,events):
         self.OG_image.fill(self.fill_color)
         for i,obj in enumerate(self.objs):
             obj.update_surf(True)
+            obj._update_(events)
             obj.update()
             img_rect = obj.image.get_rect(center=obj.rect.center)
             self.OG_image.blit(obj.image,img_rect)
         self.update_surf(True)
 
-    def update(self):
-        self._update_objs()
+    def _update_(self,events):
+        self._update_objs(events)
 
+        self._handle_events(events)
+
+    def _handle_events(self,obj:"Render"):
+        pass
 
 class Chunk(Layer):
     def __init__(self, cx = 0, cy = 0, angle = 0,chunk_size=0, surf=None, fill_color=None,update_method:"callable"=None):
@@ -142,13 +189,17 @@ class Chunk(Layer):
         genorator(self)
         self._base_image = self.OG_image.copy()
     
-    def update(self):
+    def _update_(self,events):
         self.OG_image = self._base_image.copy() 
         for obj in self.objs:
+            obj._update_(events)
+            obj.update()
             obj.update_surf(True)
             self.OG_image.blit(obj.image, obj.get_pos())
         self.update_method(self)
         self.update_surf(True)
+
+        self._handle_events(events)
     
 class Chunked_Layer(Render):
     def __init__(self, x, y, width, height, angle=0, surf = None,chunk_size:int=0,chunk_updateor:"callable"=None,chunk_genorator:"callable"=None,chunk_fill_color=(0,0,0)):
@@ -221,7 +272,7 @@ class Chunked_Layer(Render):
         crect_bx,crect_by = self.pos_to_cpos((self.camera_x + rect_w),(self.camera_y + rect_h))
         return crect_x,crect_y,crect_bx,crect_by
 
-    def _render_visable_chunks(self):
+    def _render_visable_chunks(self,events):
         self.OG_image.fill(self.fill_color)
 
         crect_x,crect_y,crect_bx,crect_by = self._get_render_range()
@@ -230,14 +281,16 @@ class Chunked_Layer(Render):
         for cy in range(crect_y,crect_by+ 1):
             for cx in range(crect_x,crect_bx + 1):
                 tile = self.get_tile(cx,cy)
+                tile._update_(events)
                 tile.update()
                 x,y = tile.rect.x,tile.rect.y
                 self.OG_image.blit(tile.image,(x- self.camera_x,y - self.camera_y))
 
         self.update_surf(True)
 
-    def update(self):
-        self._render_visable_chunks()
+    def _update_(self,events):
+        self._render_visable_chunks(events)
+        self._handle_events(events)
         
 class Font_Render(Render):
     Sys_fonts = pygame.font.get_fonts()
@@ -252,12 +305,12 @@ class Font_Render(Render):
         self.update_text()
 
     def _word_wrapping_text_render(self):
-        self.OG_image.fill(self.bg_color)
+        #self.OG_image.fill(self.bg_color)
         collection = [word.split(" ") for word in self.text.splitlines()]
         space = self.font.size(' ')[0]
         #wh = self.font.get_height()
 
-        self.OG_image = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
+        #self.OG_image = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
         self.OG_image.fill(self.bg_color)
 
         x,y = 0,0
@@ -298,7 +351,7 @@ class Display_Manager(Class_Data):
             "target_fps":threading.Lock(),
             "running":threading.Lock(),
             "display":threading.Lock(),
-            "root_layer":threading.Lock(),
+            "event":threading.Lock(),
             "update":threading.Lock()
         }
         self.keybinds = {
@@ -306,8 +359,10 @@ class Display_Manager(Class_Data):
             "down":{},
             "buttons":{},
             "joy_button_up":{},
-            "joy_button_down":{}
+            "joy_button_down":{},
+
             }
+        self._event_que = {}
         self.joysticks = []
 
     def __init__(self,window_size:"tuple",display_size:"tuple",force_full_screen:bool=False,window_name:str="skyport-engine window",window_ico:"pygame.Surface"=None,resizable:bool=True,root_layer=None,post_render_hook=None,pre_render_hook=None):
@@ -360,6 +415,7 @@ class Display_Manager(Class_Data):
 
     def update_root_layer(self):
         """this updates the rood layer but do not call unless you set update__root_layers to False and want to manualy manage Render updating """
+        self.root_layer._update_(self._event_que)
         self.root_layer.update()
         rect = self.root_layer.rect
         self.display.blit(
@@ -421,34 +477,36 @@ class Display_Manager(Class_Data):
                 if joy.get_button(bind):
                     self._exacute_funcs(funcs,i)
 
-
     def event_handler(self):
         """you will need to call this in your game loop to handle input events like window resizing or keybinds"""
         try:
-            self._handle_buttons_keybinds()
-            if self.joysticks:
-                self._handle_joystick_buttons(self.keybinds["joy_button_down"])
-                self._handle_joystick_buttons(self.keybinds["joy_button_up"])
-            events = pygame.event.get()
-            for event in events:
-                if event.type == pygame.KEYDOWN:
-                    funcs = self.keybinds["down"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keydonw)")])
-                    self._exacute_funcs(funcs)
-                if event.type == pygame.KEYUP:
-                    funcs = self.keybinds["up"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keyup)")])
-                    self._exacute_funcs(funcs)
-                if event.type == pygame.QUIT:
-                    self.running = False
-                    print("\nquit pressed\n")
-                    self.STOP_RENDERING_THREAD()
-                    pygame.quit()
-                if event.type == pygame.VIDEORESIZE:
-                    print(event.size)
-                    self._couculate_window_scaling()
-                    self.window.fill((0,0,0))
-                if event.type == pygame.JOYDEVICEADDED:
-                    joy = pygame.joystick.Joystick(event.device_index)
-                    self.joysticks.append(joy)
+            with self._locks["event"]:
+                self._handle_buttons_keybinds()
+                if self.joysticks:
+                    self._handle_joystick_buttons(self.keybinds["joy_button_down"])
+                    self._handle_joystick_buttons(self.keybinds["joy_button_up"])
+                events = pygame.event.get()
+                self._event_que = events
+                for event in events:
+                    if event.type == pygame.KEYDOWN:
+                        funcs = self.keybinds["down"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keydonw)")])
+                        self._exacute_funcs(funcs)
+                    if event.type == pygame.KEYUP:
+                        funcs = self.keybinds["up"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keyup)")])
+                        self._exacute_funcs(funcs)
+
+                    if event.type == pygame.QUIT:
+                        self.running = False
+                        print("\nquit pressed\n")
+                        self.STOP_RENDERING_THREAD()
+                        pygame.quit()
+                    if event.type == pygame.VIDEORESIZE:
+                        print(event.size)
+                        self._couculate_window_scaling()
+                        self.window.fill((0,0,0))
+                    if event.type == pygame.JOYDEVICEADDED:
+                        joy = pygame.joystick.Joystick(event.device_index)
+                        self.joysticks.append(joy)
         except Exception as e:
             loger.log(f"error in event handeling: {e}")
             events = []
