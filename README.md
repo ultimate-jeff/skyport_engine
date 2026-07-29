@@ -82,13 +82,13 @@ To create your window you will need to create a Display_Manager instance:
 This will make a window pop up, but it won't respond, because the rendering thread is not on and you have to manually manage the window in this state.
  
 Note :
-    skyport has some resolution templates such as
-    ```python
-    skyport.REZ_1080p
+skyport has some resolution templates such as
+```python
+skyport.REZ_1080p
 
-    skyport.RES_4k
-    ```
-    all the resolution presets are skyport.REZ_...
+skyport.RES_4k
+```
+all the resolution presets are skyport.REZ_...
 
 One thing you can do while the window is in this state is manually run a loading screen while your game initializes before the rendering thread starts:
 ```python
