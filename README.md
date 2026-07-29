@@ -81,6 +81,15 @@ To create your window you will need to create a Display_Manager instance:
 ```
 This will make a window pop up, but it won't respond, because the rendering thread is not on and you have to manually manage the window in this state.
  
+Note :
+    skyport has some resolution templates such as
+    ```python
+    skyport.REZ_1080p
+
+    skyport.RES_4k
+    ```
+    all the resolution presets are skyport.REZ_...
+
 One thing you can do while the window is in this state is manually run a loading screen while your game initializes before the rendering thread starts:
 ```python
 import time
@@ -489,9 +498,9 @@ class My_Obj(sp.Render):
     # rest of class .....
 ```
 the Render class would just automatically handle image scaling and rotating
-Note
-    most of the time image updating is automatic when you use set_angle or set_size but if you mod the OG image you will have to call my_class_instance.update_image() for it to update (this might change in a later update)
+Note: ``` most of the time image updating is automatic when you use set_angle or set_size but if you mod the OG image you will have to call my_class_instance.update_surf() for it to update (this might change in a later update) ```
 
+Note2: ``` x and y are not stored inside of the Render instead they are stored inside Render.rect.x / Render.rect.y ```
 ### Render binds:
 each render can have binds like a button
 

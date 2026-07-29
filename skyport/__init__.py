@@ -49,7 +49,7 @@ REZ_DCI_4K = (4096,2160)
 REZ_5K = (5120,2880)
 REZ_8K = (7680,4320)
 
-__version__ = "0.2.23"
+__version__ = "0.2.24"
 
 from .global_utils import (
     Loader,
@@ -75,3 +75,5 @@ from . import decorators
 def _set_recursion_depth(depth=1500):
     from global_utils import sys
     sys.setrecursionlimit(depth) 
+def quit():
+    pygame.quit()

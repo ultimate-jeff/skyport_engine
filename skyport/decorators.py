@@ -30,7 +30,7 @@ def Toggle(attr_name: str):
         return wrapper
     return decorator
 
-def Once():
+def Once(func=None):
     """
     this makes your function only callable once per instance
     """
@@ -42,5 +42,7 @@ def Once():
                 fired.add(id(self))
                 return func(self, event)
         return wrapper
+    if func != None and callable(func):
+        return(decorator(func))
     return decorator
 

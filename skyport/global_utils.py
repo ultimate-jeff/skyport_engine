@@ -263,7 +263,7 @@ class Loader(Class_Data):
     def get_supported_types(self):
         return self.supported_types.keys()
     def set_unsupported_handler(self,handler=None):
-        unsupported_handler = handler
+        self.unsupported_handler = handler
     def resolve_path(self,path:"str"):
         path = pl.Path(path)
         if(path.is_absolute() ):
@@ -310,14 +310,17 @@ class Loader(Class_Data):
         data = self.read(path,add_to_map,overwrite_map)
         if data == None:
             return Loader.error_asset_map["image"]
+        return data
     def data(self,path:"str",add_to_map:bool=False,overwrite_map:bool=False):
         data = self.read(path,add_to_map,overwrite_map)
         if data == None:
             return Loader.error_asset_map["data"]
+        return data
     def sound(self,path:"str",add_to_map:bool=False,overwrite_map:bool=False):
         data = self.read(path,add_to_map,overwrite_map)
         if data == None:
             return Loader.error_asset_map["sound"]
+        return data
 
     def _preload_folder_list(self,path:"str",preload_data:dict):
         path_list = preload_data["value"]

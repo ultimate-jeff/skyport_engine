@@ -43,7 +43,10 @@ class Render(Class_Data):
                 lookup_key = getattr(event, 'key', getattr(event, 'button', None))
                 if lookup_key in sub_dict:
                     for func in sub_dict[lookup_key]:
-                        func(self, event)
+                        if hasattr(func,"__self__"):
+                            func(event)
+                        else:
+                            func(self, event)
 
     def add_bind(self, event, button, func):
         if event not in self.events:
@@ -172,7 +175,7 @@ class Layer(Render):
 
 
 class Chunk(Layer):
-    def __init__(self, cx = 0, cy = 0, angle = 0,chunk_size=0, surf=None, fill_color=None,update_method:"callable"=None):
+    def __init__(self, cx = 0, cy = 0, angle = 0,chunk_size=1, surf=None, fill_color=None,update_method:"callable"=None):
         self.cx,self.cy = cx,cy
         x,y = (cx * chunk_size),(cy * chunk_size)
         self.update_method = update_method if update_method != None else lambda s : None
@@ -218,7 +221,7 @@ class Chunked_Layer(Render):
     def get_tile(self,cx:int,cy:int):
         """returns the tile at the (cx,cy)"""
         if (cx,cy) not in self._tiles:
-            tile = tile = Chunk(cx,cy,0,self.chunk_size,update_method=self._chunk_update_method,fill_color=self.fill_color) 
+            tile = Chunk(cx,cy,0,self.chunk_size,update_method=self._chunk_update_method,fill_color=self.fill_color) 
             self._tiles[(cx,cy)] = tile
             tile.gen_chunk(self._chunk_genorator)
         return self._tiles[(cx,cy)]
@@ -544,7 +547,6 @@ class Display_Manager(Class_Data):
                         self.running = False
                         print("\nquit pressed\n")
                         self.STOP_RENDERING_THREAD()
-                        pygame.quit()
                     if event.type == pygame.VIDEORESIZE:
                         print(event.size)
                         self._couculate_window_scaling()
@@ -556,7 +558,6 @@ class Display_Manager(Class_Data):
                         self.running = False
                         print("\nquit pressed\n")
                         self.STOP_RENDERING_THREAD()
-                        pygame.quit()
         except Exception as e:
             loger.log(f"error in event handeling: {e}")
             events = []
