@@ -49,18 +49,21 @@ class Class_Data:
         self.id = type(self).instances
         self.tags = {}
     def random_function(self):
-        import skyport as sp
+        try:
+            import skyport as sp
 
-        dm = sp.Display_Manager(
-            window_size=sp.REZ_SVGA,
-            display_size=sp.REZ_1080p,
-            window_name="this is the random function"
-        )
-        dm.START_RENDERING_THREAD(60)
-        while dm.running:
+            dm = sp.Display_Manager(
+                window_size=sp.REZ_SVGA,
+                display_size=sp.REZ_1080p,
+                window_name="this is the random function"
+            )
+            dm.START_RENDERING_THREAD(60)
+            while dm.running:
 
-            dm.event_handler()
-            dm.tick(20)
+                dm.event_handler()
+                dm.tick(20)
+        except Exception as e:
+            print(f"sry for the let down the random function dose nothing with these conditions. error->{e}")
 
 class Loger(Class_Data):
     def __init__(self):

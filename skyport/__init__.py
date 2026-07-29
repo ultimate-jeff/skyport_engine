@@ -49,7 +49,7 @@ REZ_DCI_4K = (4096,2160)
 REZ_5K = (5120,2880)
 REZ_8K = (7680,4320)
 
-__version__ = "0.2.22"
+__version__ = "0.2.23"
 
 from .global_utils import (
     Loader,
@@ -67,7 +67,8 @@ from .main import (
     SDL2_Display_Manager,
     Chunk,
     Chunked_Layer,
-    Font_Render
+    Font_Render,
+    Camera
     )
 from . import decorators
 

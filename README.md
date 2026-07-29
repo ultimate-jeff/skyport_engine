@@ -9,8 +9,8 @@ made by: Matthew R and William L
 skyport is a 2D game engine built on pygame-ce that simplifies tasks like managing the window , asset loading , rendering and eventually more.
 # Data :
 ## links :
-- GitHub : https://github.com/ultimate-jeff/skyport_engine 
-- pypi : https://pypi.org/project/skyport-engine/ 
+- GitHub : https://github.com/ultimate-jeff/skyport_engine
+- pypi : https://pypi.org/project/skyport-engine/
 
 ## Table of Contents
 - Data : (like links or other data)
@@ -30,15 +30,15 @@ skyport is a 2D game engine built on pygame-ce that simplifies tasks like managi
 - Asset preloading and caching
 - Built-in input handling
 - Delta timer
-- Render helper class
+- Render helper class / rendering pipe line
 - Experimental chunk renderer
 - SDL2 renderer (experimental)
 
 # Getting started:
-Note: 
+Note:
     skyport is not a replacement for pygame, so it is good to be familiar with pygame.
-    
-to start you will first need skyport_engine 
+   
+to start you will first need skyport_engine
 ```terminal
 pip install skyport-engine
 ```
@@ -105,19 +105,18 @@ dm.START_RENDERING_THREAD(60)
  
 sp.loger.output_print_data() # this line prints out everything that the engine has logged, including any errors or random logs
  
- 
 #game loop
 while dm.running:
  
     dm.event_handler()
-    dm.tick(tps=20) # <- this just ensures that the game loop runs at 20 ticks per second 
+    dm.tick(tps=20) # <- this just ensures that the game loop runs at 20 ticks per second
 ```
 In this example the window will not respond for 10 seconds, but in that time you could initialize your game on a separate thread and run a loading screen (video on threading: https://www.youtube.com/watch?v=A_Z1lgZLSNc).
  
 ## Game loop:
 After you have the window created:
 ```python
-import skyport.__init__ as sp
+import skyport as sp
 import time
 pygame = sp.pygame
  
@@ -143,10 +142,10 @@ while display_manager.running:
 ```
 Creating the game loop is very simple.
 ## keybinds and event handler :
-there are 3 types of binds : key up , key down , key pressed 
-these you can bind any function to any of the 3 types and you can have multiple functions on 1 key 
+there are 3 types of binds : key up , key down , key pressed
+these you can bind any function to any of the 3 types and you can have multiple functions on 1 key
 ### adding and removing binds :
-to add or to remove a bind you can call its add or remove method for the type 
+to add or to remove a bind you can call its add or remove method for the type
 ```python
 display_manager.add_keyup_bind(pygame.K_a,my_function)
 
@@ -154,9 +153,9 @@ display_manager.add_keydown_bind(pygame.K_s,lambda : print("this bind works"))
 
 dislay_manager.add_keypressed_bind(pygame.K_e,[func1,func2,func3]) # <- you can add multiple functions to 1 key and it works for all bind types not just pressed keys
 ```
-you can also remove binds 
+you can also remove binds
 ```python
-display_manager.remove_keyup_bind(pygame.K_a,my_function) # this will remove the function from the key bind of 'a' 
+display_manager.remove_keyup_bind(pygame.K_a,my_function) # this will remove the function from the key bind of 'a'
 display_manager.remove_keydown_bind(pygame.K_s,function)
 
 display_manager.remove_keypressed_bind(pygame.K_e,[func1,func2,func3]) #<- you can also remove multiple binds and this works on the other types as well
@@ -173,7 +172,7 @@ pygame = skyport.pygame
 
 # ... other code ...
 
-clock = pygame.time.Clock() # you dont have to use the Display_Manager's built in clock for your game loop
+clock = pygame.time.Clock() # you don't have to use the Display_Manager's built in clock for your game loop
 
 while display_manager.running:
 
@@ -182,28 +181,28 @@ while display_manager.running:
     clock.tick(20) # <-tps
 ```
 ### joysticks and gamepad and other input methods :
-skyport will automaticly handle adding and removing of joysticks / controlors 
+skyport will automatically handle adding and removing of joysticks / controlors
 
-to add a bind to a joystick button its just like keybinds but the function you pass in needs take in 1 peramiter of the controlor id 
+to add a bind to a joystick button its just like keybinds but the function you pass in needs take in 1 parameter of the controller id
 
 ```python
 display_manager.add_joy_button_down_bind(button_index=9,funcs=lambda joy_index : ... )
 ```
 and then removing a joystick bind is the same as removing a keybind
 
-more controlor joystick support will come later
+more controller / joystick support will come later
 
-## bliting and filling of the window :
+## blitting and filling of the window :
 note :
 ```text
-there are 2 surfaces in the display manager 1: the window and 2: the display 
+there are 2 surfaces in the display manager 1: the window and 2: the display
 the display is the one that you will blit to (the display is scaled to the size of the window then the display is blitted to the window)
 ```
 there are 3 main methods :
  - blit(self,source: "pygame.Surface", dest: "pygame.RectLike" = (0, 0), area: "pygame.RectLike" = None, special_flags: "int" = 0):
  - fill(self,color:"tuple"=(0,0,0,0),rect:"pygame.Rect"=None,special_flags:"int"=0):
  - get_display() -> display_manager_instance display
-these three methods are currently all you have to work with but because you can get the display all pygame ops work 
+these three methods are currently all you have to work with but because you can get the display all pygame ops work
 ```python
 # .....
 display = display_manager.get_display()
@@ -214,40 +213,39 @@ display_manager.blit(surf,(10,10)) # works just like the pygame blit (bc it is)
 
 # .....
 ```
-do take into acount that when you blit something to the display it will not go on to the window unless the rendering thread is started or you would have to call display_manager.update_window()
+do take into account that when you blit something to the display it will not go on to the window unless the rendering thread is started or you would have to call display_manager.update_window()
 ```python
-# ... previos code /\
+# ... previous code /\
 display_manager.blit(surf,(10,10)) # blit a surf to pos x=10,y=10
 
 display_manager.update_window() # update window so what was just blitted to the display is now on the window
 
-display_manager.START_RENDERING_THREAD(fps=60) # the rendering gthread automatically handles updating the display so after you start the rendering thread you should not call update_window()
+display_manager.START_RENDERING_THREAD(fps=60) # the rendering thread automatically handles updating the display so after you start the rendering thread you should not call update_window()
 #... game loop \/
 ```
-
 
 ## how to use the Loader :
 note :
 ```text
 the loader is made to pre load files so your game is not waiting on ssd to load your files
 ```
-creating a Loader instance is vary easy 
+creating a Loader instance is very easy
 ```python
 
-loader = skyport.Loader(__file__) # you need to pass this in or the loader might not use the correct base directory for relative paths 
+loader = skyport.Loader(__file__) # you need to pass this in or the loader might not use the correct base directory for relative paths
 
 ```
 to actually pre load your loader instance with files you will need to call loader.load_from_map
 ```python
 loader = skyport.Loader(__file__)
 
-loader.load_from_map(map_path="path/to/Loader_preload_map.json") 
-``` 
-when you call load_from_map the loader instance will look at that file dir and try to preload all the files that the loader map said to pre load 
+loader.load_from_map(map_path="path/to/Loader_preload_map.json")
+```
+when you call load_from_map the loader instance will look at that file dir and try to preload all the files that the loader map said to pre load
 
 note :
 ```text
-to see how to make a Loader map go to the Loader section in the read me and in a later update there will be a tool to automatically create Loader maps for you 
+to see how to make a Loader map go to the Loader section in the read me and in a later update there will be a tool to automatically create Loader maps for you
 ```
 
 ### how to read files with the Loader :
@@ -256,28 +254,30 @@ the method for trading a file with the loader is loader.read
 
 image = loader.read(path="my_images/file.png") # this will return the files content and in this case its a image
 
-data = loader.read(path="my_files/data.json",add_to_map=True) # in this case i want to load the json more than once so i will att it to the map which means next time you try to load it it will pull it from memory instead of disk 
+data = loader.read(path="my_files/data.json",add_to_map=True) # in this case i want to load the json more than once so i will att it to the map which means next time you try to load it it will pull it from memory instead of disk
 
 ```
 there is also some other ways to read a file but these ways have an error asset tied to them so if your image fails to load you get an error image
-```python 
+```python
 skyport.Loader.init() # this will init the Loader class with the error assets
 
 loader = skyport.Loader(__file__) # create a Loader instance to load files
 
-img = loader.image(path="my_images/jeff.png") # if the loader cant load this file then it will return an error image 
+img = loader.image(path="my_images/jeff.png") # if the loader cant load this file then it will return an error image
 sound = loader.sound(path="my_sounds/idk.mp3") # there is also an error sound
 
-data = loader.data(path="my_data/dave.json") # there is only a error json (try to not use this one but it exsists)
+data = loader.data(path="my_data/dave.json") # there is only a error json (try to not use this one but it exists)
 ```
-the Loaders .image , .sound , .data methods all have the same parameters as loader.read but they will try to give you an error asset instead of None 
+the Loaders .image , .sound , .data methods all have the same parameters as loader.read but they will try to give you an error asset instead of None
 ### saving files with the Loader :
 you can save files with loader.save(path,map_key)
 ```python
 img = pygame.Surface((100,100))
 img.fill((100,100,100))
 
+
 loader.save(img,"my_images/new_img.jpeg")
+
 
 ```
 
@@ -314,10 +314,9 @@ while dm.running:
     dm.tick(tps=60)
 
 ```
-in this example there is a class which inherits from the Render class so it can be renderd through skyport-engines renering pipeline
+in this example there is a class which inherits from the Render class so it can be rendered through skyport-engines rendering pipeline
 
-
-## enample 2 layer basics
+## example 2 layer basics
 ```python
 ui_layer = sp.Layer(width=800, height=600)
 ui_menue_layer = sp.Layer(width=100,height=600)
@@ -326,20 +325,17 @@ ui_layer.add_obj(ui_menue_layer) # you can put a Layer inside of a Layer because
 
 world_layer = sp.Layer(width=800, height=600)
 
-
 world_layer.add_obj(box)
 ui_layer.add_obj(Box(10, 10, 32, (255, 255, 0)))  # (a health icon)
 
-
-# to get a layer renderd you need to add it to the root_layer 
+# to get a layer rendered you need to add it to the root_layer
 dm.root_layer.add_obj(world_layer)
-# layers added after previos layers will be on top of the layer added before
+# layers added after previous layers will be on top of the layer added before
 dm.root_layer.add_obj(ui_layer)
 ```
 
 ## more will come :
 more examples will come in later updates
-
 
 # Content :
 
@@ -347,16 +343,15 @@ more examples will come in later updates
 The Display_Manager is made to automatically handle the window on a separate thread so that the rendering loop can be separate from the game loop.
 Note :
 ```
-the display manager has been mostly coverd in the getting started section but heare we will dive a bit deeper into what the Display_Manager actually can do
+the display manager has been mostly covered in the getting started section but here we will dive a bit deeper into what the Display_Manager actually can do
 ```
 
-there is an experimental feature that alows you to add a function that is called after rendering every frame 
+there is an experimental feature that allows you to add a function that is called after rendering every frame
 ```python
 # this function will be called every frame after rendering everything
 display_manager.pos_render_hook = lambda self : ......
 ```
 
- 
 ## Loader:
 The Loader is made to pre-cache files in memory.
  
@@ -411,7 +406,6 @@ import skyport as sp
 loader = sp.Loader(__file__)
 # (optional) you can preload all the files you want into the Loader so you don't have to get them later
 loader.load_from_map("loader_map_test1.json")
- 
 # to read the content of the file whether the Loader has pre-loaded it or not, you can call read()
 file_data = loader.read(path="my_path/image.png",add_to_map=True)
 # this method allows you to create more convenient names for your pre-loaded files
@@ -447,12 +441,12 @@ And for saving:
     ".jpeg": lambda p, d: pygame.image.save(d, p),
     ".txt": Save_file(lambda f, d: f.write(str(d)))
 ```
-note : Load_file and Save_file are decorators that ensure that when the file is open it is safely closed 
+note : Load_file and Save_file are decorators that ensure that when the file is open it is safely closed
  
 ## Util:
 This is a utility class that holds random and potentially useful methods, such as:
 - get_angle_and_dist(self,x1:"int",y1:"int",x:"int",y:"int")
-- pryoraty(self,a=None,b=None): this function will return `a` if there is an `a`
+- priority(self,a=None,b=None): this function will return `a` if there is an `a`
 - snap_cords_in_bounds(self,x:"int",y:"int",max_x:"int",max_y:"int",min_x:"int"=0,min_y:"int"=0): this snaps coordinates inside of a rectangular area
 - couculate_dx_dy(self,dist:"int",angle:"float")
 - couculate_angle_dist(self,dx:"int",dy:"int")
@@ -478,13 +472,13 @@ This is for getting the delta time between the current call of `get_dt()` and th
 ```python
 dt = sp.Delta_timer()
 
-time_dif = dt.get_dt() 
+time_dif = dt.get_dt()
 
 ```
-get_dt returns the difference in time from when the instance is created to the call of get_dt and then if you call it again it returns the difference in time from the last call to the current call 
+get_dt returns the difference in time from when the instance is created to the call of get_dt and then if you call it again it returns the difference in time from the last call to the current call
  
 ## Render :
-the render class is a data class holding data like rect,x,y,angle,surface and has a couple utilaty tools and it was made to be used like :
+the render class is a data class holding data like rect,x,y,angle,surface and has a couple utility tools and it was made to be used like :
 ```python
 
 class My_Obj(sp.Render):
@@ -493,26 +487,25 @@ class My_Obj(sp.Render):
         # my objs data like health or max speed .......
    
     # rest of class .....
-
 ```
-the Render class would just automatically handle image scaling and rotating 
+the Render class would just automatically handle image scaling and rotating
 Note
     most of the time image updating is automatic when you use set_angle or set_size but if you mod the OG image you will have to call my_class_instance.update_image() for it to update (this might change in a later update)
 
 ### Render binds:
-each render can have binds like a button 
+each render can have binds like a button
 
-to add a bind to a Render type obj you go 
+to add a bind to a Render type obj you go
 ```python
 my_render.add_bind(event=pygame.MOUSEBUTTONDOWN,button=1,func=[func1...])
 
 ```
-just like binds with the Display_Manager you dont have to pass in a list/tuple of functions you can also just pass in 1 function 
+just like binds with the Display_Manager you don't have to pass in a list/tuple of functions you can also just pass in 1 function
 
-these binds are applied only to the Render type obj you apply them to and all functions you pass in need to take in 2 peramiters self and event (event is the standard pygame event that you would get from the event handler)
+these binds are applied only to the Render type obj you apply them to and all functions you pass in need to take in 2 parameters self and event (event is the standard pygame event that you would get from the event handler)
 
 #### how do do a GUI button:
-to do a GUI button you will add a Render bind to ur render intance with a function that would detect if the Renders rect is coliding with the mouse
+to do a GUI button you will add a Render bind to ur render instance with a function that would detect if the Renders rect is colliding with the mouse
 ```python
 def on_clik(self,event):
     if self.rect.collidepoint(display_manager.mouse_pos):
@@ -523,7 +516,7 @@ my_render_instance.add_bind(event=pygame.MOUSEBUTTONDOWN,,button=1,funt=on_click
 now when the mouse clicks on this Render instance it will print the data
 
 ## Layer :
-the layer can hold many objs that inherit the from Render class and then it will automaticly render them to the display every frame and it will call the update function of the Render class every frame 
+the layer can hold many objs that inherit the from Render class and then it will automatically render them to the display every frame and it will call the update function of the Render class every frame
 
 ```python
 class my_class(skyport.Render):
@@ -532,7 +525,7 @@ class my_class(skyport.Render):
 my_layer = skyport.Layer(width=100,height=100)
 
 # you can add layers in layers
-my_layer.add_obj(skyport.Layer(...)) 
+my_layer.add_obj(skyport.Layer(...))
 
 # you can also add any class that inherits from skyport.Render class
 my_layer.add_obj(my_class)
@@ -540,12 +533,12 @@ my_layer.add_obj(my_class)
 # you can remove obj from a layer
 my_layer.remove_obj(my_class)
 
-# if u know the id of an obj u can get it from a layer 
+# if u know the id of an obj u can get it from a layer
 my_layer.get_obj_from_id(1)
 
 # there are more basic methods
 ```
-to use layers and renders to their full potential and render them every frame you just need to put them in your display managers root_layer and then the Renders / Layers will auto update and auto render to the display every frame 
+to use layers and renders to their full potential and render them every frame you just need to put them in your display managers root_layer and then the Renders / Layers will auto update and auto render to the display every frame
 ```python
 my_layer.add_obj(my_obj)
 
@@ -555,52 +548,51 @@ display_manager.root_layer.add_obj(my_layer)
 
 ### methods :
 some of the methods as of this update are :
-    - get_surf : this returns the up to date surf 
+    - get_surf : this returns the up to date surf
     - get_pos : this returns -> (x,y)
     - get_size : this returns -> (width,height)
-    - set_angle : this sets the angle and auto updates the surf 
+    - set_angle : this sets the angle and auto updates the surf
     - set_size : this sets the size and auto updates the surf
 
-
 ## Chunked_Layer:
-with this u can render masive worlds without hitting a performance wall
+with this u can render massive worlds without hitting a performance wall
 
 ### how to use
-bc this is just a Render at hart u can use it in any spot where a Render type class can be used including in other Layer's or with in a chunk of a chunk layer 
+bc this is just a Render at hart u can use it in any spot where a Render type class can be used including in other Layer's or with in a chunk of a chunk layer
 ```python
 world = sp.Chunked_Layer(
     x=0,
     y=0,
     width=DISPLAY_SIZE[0],
     height=DISPLAY_SIZE[1],
-    angle=0, # bc this is a render u can angle this 
+    angle=0, # bc this is a render u can angle this
     chunk_size=CHUNK_SIZE,
-    chunk_genorator=chunk_genorator, # this will be used to genorate each chunk and it will be passed in the chunks self 
-    chunk_updateor=chunk_updateor, # this function will be passed to each chunk on genoration and the chunk will call it every time the chunk is updated 
+    chunk_genorator=chunk_genorator, # this will be used to genorate each chunk and it will be passed in the chunks self
+    chunk_updateor=chunk_updateor, # this function will be passed to each chunk on generation and the chunk will call it every time the chunk is updated
 )
 ```
-other than a few things this is just a bace Render
+other than a few things this is just a base Render
 
-to move the camera around u will use chunk_layer.camera_x , chunk_layer.camera_y 
+to move the camera around u will use chunk_layer.camera_x , chunk_layer.camera_y
 ```python
 world.camera_x += 5
 
 world.camera_y += 2
 ```
-this will move what part of the world that will be renderd to the chunked layer .image surface 
+this will move what part of the world that will be rendered to the chunked layer .image surface
 
 do add an Render type class you would use your chunk layers chunk_obj method which would figure out what chunk the obj belongs to then it would add the obj to that chunk
 ```python
 class myclass(Render):
     ...
 
-my_obj = myclass(peramiters)
+my_obj = myclass(parameters)
 
 # this would put it into the chunk that the objs cords would be in
 chunk_layer.chunk_obj(my_obj)
 
 ```
-if you have moving objects you might want them to not un load when the chunk layer stops updating there chunks and to do that you would want to ocasionaly re chunk a chunk 
+if you have moving objects you might want them to not un load when the chunk layer stops updating there chunks and to do that you would want to occasionally re chunk a chunk
 ```python
 # this would re chunk all objs in this chunk to there corect chunk
 chunk_layer.re_chunk(cx=1,cy=2)
@@ -614,33 +606,50 @@ there is also a way to rechunk only loaded chunk
 chunk_layer.re_chunk_visable()
 ```
 
-chunk_layers do have a cuple of useful tools
+chunk_layers do have a couple of useful tools
 ```python
-# this returns the chunk at the pos and if it dose not exsist it will genorate it
+# this returns the chunk at the pos and if it does not exist it will generate it
 chunk = chunk_layer.get_tile(cx=1,cy=5)
 
-# this will return the chunk at the chunk cords only if it already exsists
-chunk = chunk_layer.get_existing_tile(cx=1,cy=6) 
+# this will return the chunk at the chunk cords only if it already exists
+chunk = chunk_layer.get_existing_tile(cx=1,cy=6)
 
-#this will remove the chunk if it exsists
-chunk_layer.remove_tile(cx,cy) 
+#this will remove the chunk if it exists
+chunk_layer.remove_tile(cx,cy)
 
 # this will tell you what chunk that these cords would end up in
 chunk_pos = chunk_layer.pos_to_cpos(x=100,y=224)
 
-# this will tell u the pos of the chunk 
+# this will tell u the pos of the chunk
 pos = chunk_layer.cpos_to_pos(cx=1,cy=2)
+
 
 ```
 
-
- 
 ## Chunk:
-the Chunk is just a modified Layer moded to be used with the Chunk_Layer class to be renderd and render other Render type class instances 
+the Chunk is just a modified Layer modded to be used with the Chunk_Layer class to be rendered and render other Render type class instances
 Note :
 ```md
 the chunk is not meant to be directly used
 ```
+## Camera :
+the Camera class is like the Chunked_layer class but it is for smaller worlds but the Camera class adds a zoom mechanic so you can zoom in and out of your worlds
+```python
+
+cam = sp.Camera(width=100,height=100,world_width=300,world_height=300)
+
+cam.set_cam_pos(30,30)
+
+cam.zoom = 1.2
+
+```
+the Camera class inherits from the layer class so it has all the same methods and attars 
+
+Note:
+``` the cam.zoom is a size multiplier so a zoom of 2 makes the map zoom in 2x more and a zoom of 0.8 make the map zoom to 0.8x the OG size ```
+
+more documantation will come
+
 ## Font_Render:
 this is a render that renders text
 so you can use it just like a normal Render but it auto renders text
@@ -656,19 +665,15 @@ my_text = sp.Font_Render(
     bg_color=(100,100,100)
 )
 ```
-if word wrapping is True then the text will wrapp to stay with in the rect of the Render
+if word wrapping is True then the text will wrap to stay with in the rect of the Render
 
 ## SDL2_Display_Manager :
 Note:
-    this is experimental and might not work on your OS and some features might be broken 
+    this is experimental and might not work on your OS and some features might be broken
 this is the same as Display_Manager but it uses pygames sdl2 to use your gpu (more documentation will come ...)
-Note : 
+Note :
 ```md
 do not call the event handler when using the sdl2 display manager (it might freeze or crash)
-```
-other Note :
-```md
-the sdl2 display manager is not complete and has a lot of bugs like auto keybinds dont work and others so if you manage to fix any or just find some you can email me about them and if you can provide a potential fix plz do 
 ```
 
 ## decorators :
@@ -678,16 +683,12 @@ skyport-engine has a few built in decorators which might be useful such as
 - Save_file
 - Load_file
 
-
 each decorator should say in the IDE a bit about it but in case you don't have an IDE which does that here is a bit of data on each of the decorators
-
 
 Note: the only 2 decorators that are not in skyport.decorators is Load_file and Save_file because they are part of the Loader
 
-
 ### Button :
 this decorator is meant to be used with Render type classes (classes which inherit from the Render class or just the Render class)
-
 
 if you decorate your function with this decorator your function will only execute when the mouse is over the rect of the Render type class but because this decorator is built for the Render class your function has to accept two parameters self (the class instance) and event (the pygame event that triggered the call of your function)
 ```python

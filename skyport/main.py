@@ -1,6 +1,4 @@
 
-import queue
-import time
 
 from skyport.global_utils import *
 from pygame import _sdl2 as video
@@ -38,7 +36,7 @@ class Render(Class_Data):
         self._is_dirty = True
         self.update_surf()
 
-    def _handle_events(self,events):
+    def _handle_events(self,events): # i need to optomize this to loop over self.events instead of events
         for event in events:
             if event.type in self.events:
                 sub_dict = self.events[event.type]
@@ -172,8 +170,6 @@ class Layer(Render):
 
         self._handle_events(events)
 
-    def _handle_events(self,obj:"Render"):
-        pass
 
 class Chunk(Layer):
     def __init__(self, cx = 0, cy = 0, angle = 0,chunk_size=0, surf=None, fill_color=None,update_method:"callable"=None):
@@ -291,6 +287,55 @@ class Chunked_Layer(Render):
     def _update_(self,events):
         self._render_visable_chunks(events)
         self._handle_events(events)
+
+class Camera(Layer):
+    def __init__(self, width, height,world_width,world_height, x = 0, y = 0, angle = 0, surf = None, fill_color = None,cx=0,cy=0,zoom=1):
+        super().__init__(width, height, x, y, angle,None, fill_color)
+        self.world_width = world_width
+        self.world_height = world_height
+        self.camera_x,self.camera_y = cx,cy
+        self.zoom = zoom
+        self._last_zoom = None
+        self.map = surf if surf != None else pygame.Surface((world_width,world_height),pygame.SRCALPHA)
+
+    def _scale_map(self):
+        if self._last_zoom != self.zoom:
+            self._last_zoom = self.zoom
+            nsx,nsy = self.map.get_size()
+            nsx = math.ceil(nsx * self.zoom)
+            nsy = math.ceil(nsy * self.zoom)
+            self._scaled_map = pygame.transform.scale(self.map,(nsx,nsy))
+
+    def _update_objs(self,events):
+            self.map.fill(self.fill_color)
+            for i,obj in enumerate(self.objs):
+                obj.update_surf(True)
+                obj._update_(events)
+                obj.update()
+                img_rect = obj.image.get_rect(center=obj.rect.center)
+                self.map.blit(obj.image,img_rect)
+            self.update_surf(True)
+
+    def _render_map(self):
+        self._scale_map()
+        view_rect = pygame.Rect(self.camera_x*self.zoom, self.camera_y*self.zoom, self.width, self.height)
+        self.OG_image.fill(self.fill_color)
+        self.OG_image.blit(self._scaled_map, (0, 0), area=view_rect)
+
+    def _update_(self,events):
+            self._update_objs(events)
+            self._render_map()
+            
+            self._handle_events(events)
+
+    def set_cam_pos(self, new_x, new_y):
+        max_x = max(0, self.world_width - self.width / self.zoom - 0.01)
+        max_y = max(0, self.world_height - self.height / self.zoom - 0.01)
+        self.camera_x = max(0, min(new_x, max_x))
+        self.camera_y = max(0, min(new_y, max_y))
+
+    def get_cam_pos(self):
+        return (self.camera_x,self.camera_y)
         
 class Font_Render(Render):
     Sys_fonts = pygame.font.get_fonts()
@@ -507,6 +552,11 @@ class Display_Manager(Class_Data):
                     if event.type == pygame.JOYDEVICEADDED:
                         joy = pygame.joystick.Joystick(event.device_index)
                         self.joysticks.append(joy)
+                    if event.type == pygame.WINDOWCLOSE:
+                        self.running = False
+                        print("\nquit pressed\n")
+                        self.STOP_RENDERING_THREAD()
+                        pygame.quit()
         except Exception as e:
             loger.log(f"error in event handeling: {e}")
             events = []
@@ -606,10 +656,10 @@ class SDL2_Render(Render):
         if SDL2_Render._global_render == None:
             raise RuntimeError("SDL_Render can't be initialized before SDL2_Display_Manager")
         
-
     def __init__(self,x:"int",y:"int",width:"int",height:"int",angle:"int",surf:"pygame.Surface"=None):
         """this class is meant to be inherited by other classes or used in them so like class MyGameObj(Render): ...."""
         super()
+        self._base_init()
         self.tags = {}
         self.rect = pygame.Rect(x,y,width,height)
         self.angle = angle
@@ -644,10 +694,13 @@ class SDL2_Display_Manager(Display_Manager):
 
         self.display = pygame.Surface(display_size)
         self.__clock = pygame.time.Clock()
+        self._couculate_window_scaling(pygame.rect.Rect(0,0,window_size[0],window_size[1]))
 
-    def _couculate_window_scaling(self):
-
-        self.window_width, self.window_height = self.window.size
+    def _couculate_window_scaling(self,rect:"pygame.Rect"=None):
+        if hasattr(self,"window"):
+            self.window_width, self.window_height = self.window.size
+        else:
+            self.window_width,self.window_height = rect.size
         self.display_rect = self.display.get_rect(center=(self.window_width // 2, self.window_height // 2))
         self._scale = min(self.window_width / self.display.get_width(), self.window_height / self.display.get_height())
         self._new_size = (int(self.display.get_width() * self._scale), int(self.display.get_height() * self._scale))
@@ -657,17 +710,16 @@ class SDL2_Display_Manager(Display_Manager):
 
     def update_window(self):
         """this manually updates the window (do not call this after starting rendering thread bc the rendering thread already dose)"""
-        if self.update__root_layers:
-            with self._locks["root_layer"]:
-                self._update_root_layer()
-        self.loops += 1
-        with self._locks["display"]:
+        with self._locks["update"]:
+            if self.update__root_layers:
+                self.update_root_layer()
+            self.loops += 1
             #if self._display_dirty:
             self._display_dirty = False
             self._display_texture.update(self.display)
-        self._render.clear()
-        self._display_texture.draw(dstrect=self._dest_rect)
-        self._render.present()
+            self._render.clear()
+            self._display_texture.draw(dstrect=self._dest_rect)
+            self._render.present()
 
     def _init_window(self):
         self.window = video.Window(self.window_name, self.window_size, resizable=self.resizeable_window)
@@ -707,34 +759,9 @@ class SDL2_Display_Manager(Display_Manager):
     def get_fps(self):
         return self.__clock.get_fps()
         
-    def event_handler(self):
-        """you will need to call this in your game loop to handle input events like window resizing or keybinds"""
-        try:
-            self._handle_buttons_keybinds()
-            events = pygame.event.get()
-            for event in events:
-                if event.type == pygame.WINDOWCLOSE:
-                    self.running = False
-                    print("\nquit pressed\n")
-                    self.STOP_RENDERING_THREAD()
-                    pygame.quit()
-
-                if event.type == pygame.WINDOWRESIZED:
-                    with self._locks["display"]:
-                        print(f"resize to ({event.x},{event.y})")
-                        self._couculate_window_scaling()
-                        self._display_texture = video.Texture(self._render, self._display_size)
-                        self._display_dirty = True
-
-                if event.type == pygame.KEYDOWN:
-                    funcs = self.keybinds["down"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keydonw)")])
-                    self._exacute_funcs(funcs)
-                if event.type == pygame.KEYUP:
-                    funcs = self.keybinds["up"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keyup)")])
-                    self._exacute_funcs(funcs)
-        except Exception as e:
-            loger.log(f"error in event handeling: {e}")
-            events = []
-
-
-
+    def _WINDOW_RESIZE_HANDLER(self,event):
+        with self._locks["display"]:
+            print(f"resize to ({event.x},{event.y})")
+            self._couculate_window_scaling()
+            self._display_texture = video.Texture(self._render, self._display_size)
+            self._display_dirty = True
