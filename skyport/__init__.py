@@ -73,7 +73,7 @@ from .main import (
 
 #from . import audio
 
-from . import decorators
+from .modules import decorators
 
 def _set_recursion_depth(depth=1500):
     from global_utils import sys
