@@ -65,7 +65,7 @@ class Class_Data:
         except Exception as e:
             print(f"sry for the let down the random function dose nothing with these conditions. error->{e}")
 
-class Loger(Class_Data):
+class Logger(Class_Data):
     def __init__(self):
         super().__init__()
         self.sevarity_index = [print_YELLOW,prin_ORANGE,prin_RED,"\033[1;37;41m"]
@@ -103,7 +103,7 @@ class Loger(Class_Data):
         if self.has_logs():
             self.output_print_data()
                 
-loger = Loger()
+logger = Logger()
 
 
 class Util(Class_Data):
@@ -151,7 +151,7 @@ class Util(Class_Data):
             soud_obj.play(loops)
             return 1
         except Exception as e:
-            loger.error("error trying to play sound",e)
+            logger.error("error trying to play sound",e)
     def play_sound_from_point(self,pf,sound_pos:"tuple",listener_pos:"tuple",volume:"float"=0.5,loops:"int"=0,distance_fade:"float"=0.5):
         """this playes a sound from a point"""
         max_vol = volume
@@ -244,7 +244,7 @@ class Loader(Class_Data):
         self._init_supported_types()
     def _save_csv(self, path, data):
         if not isinstance(data, list):
-            loger.error(f"CSV saver expected a list of rows, got {type(data)}")
+            logger.error(f"CSV saver expected a list of rows, got {type(data)}")
             return
         with open(path, "w", newline="") as f:
             writer = csv.writer(f)
@@ -275,7 +275,7 @@ class Loader(Class_Data):
             self._map.pop(path)
             self._map[alias] = data
             return
-        loger.error(f"could not create alias to {path} do to {path} not being found in Loader map")
+        logger.error(f"could not create alias to {path} do to {path} not being found in Loader map")
     def get_map(self):
         return self._map
     def set_map(self,mapp):
@@ -288,13 +288,13 @@ class Loader(Class_Data):
         else:
             loader = self.unsupported_handler
             if loader is None:
-                loger.error(f"unsupported type {extension} while loading {path}, ( returning None )")
+                logger.error(f"unsupported type {extension} while loading {path}, ( returning None )")
                 return None
-            loger.error(f"unsupported type {extension} for {path}, using fallback handler")
+            logger.error(f"unsupported type {extension} for {path}, using fallback handler")
         try:
             return loader(path)
         except Exception as e:
-            loger.error(f"error during loading of file {path}, ( returning None )", e)
+            logger.error(f"error during loading of file {path}, ( returning None )", e)
             return None
 
     def read(self, path: "str", add_to_map:bool=False,overwrite_map:bool=False):
@@ -304,7 +304,7 @@ class Loader(Class_Data):
         if add_to_map and result is not None:
             self._map[path] = result
         elif result == None:
-            loger.error(f"coild not open file {path} , returning None")
+            logger.error(f"coild not open file {path} , returning None")
         return result
     def image(self,path:"str",add_to_map:bool=False,overwrite_map:bool=False):
         data = self.read(path,add_to_map,overwrite_map)
@@ -359,12 +359,12 @@ class Loader(Class_Data):
     def load_from_map(self,map_path:"str"):
         data = self.read(map_path,False)
         if(type(data) != dict):
-            loger.error(f"Loader {self.id} canot load {map_path} as a Loader map (file is not .json)")
+            logger.error(f"Loader {self.id} canot load {map_path} as a Loader map (file is not .json)")
             return
         keys = data.keys()
         for k in keys:
             self._preload_elm(k,data) 
-        loger.log(f"Loader {self.id} is complete loading map {map_path}")
+        logger.log(f"Loader {self.id} is complete loading map {map_path}")
     def load_map_on_thread(self, map_path: "str"):
         thread = threading.Thread(target=self.load_from_map, args=(map_path,))
         thread.start()
@@ -378,25 +378,25 @@ class Loader(Class_Data):
     def save(self,path:"str",data):
         data
         if( data == None ):
-            loger.error(f"None is an invalid file content. can't save None to {path}")
+            logger.error(f"None is an invalid file content. can't save None to {path}")
             return
         full_path = self.resolve_path(path)
         extension = os.path.splitext(full_path)[1].lower()
         if extension not in self.supported_savers:
-            loger.error(f"{extension} is an unsuported format for saving")
+            logger.error(f"{extension} is an unsuported format for saving")
             return
         try:
             self.supported_savers[extension](full_path, data)
-            loger.log(f"sucsesfully saved map_key data to {path}")
+            logger.log(f"sucsesfully saved map_key data to {path}")
         except Exception as e:
-            loger.error(f"error during save of file to path  : {path}",e)
+            logger.error(f"error during save of file to path  : {path}",e)
 
     def save_map(self,path:"str",mapp:dict):
         try:
             with open(self._abs_resolve_path(path,self.base_dir),"w" ) as f:
                 json.dump(mapp,f,indent=4)
         except Exception as e:
-            loger.error(f"failed to save Loader map to path {path}",e)
+            logger.error(f"failed to save Loader map to path {path}",e)
 
 
 class Delta_timer(Class_Data):

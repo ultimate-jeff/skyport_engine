@@ -53,7 +53,7 @@ __version__ = "0.2.25"
 
 from .global_utils import (
     Loader,
-    loger,
+    logger,
     Util,pygame,
     Delta_timer,
     Save_file,

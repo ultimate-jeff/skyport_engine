@@ -56,6 +56,8 @@ dm.START_RENDERING_THREAD(fps=60)
 while dm.running:
  
     dm.event_handler()
+
+    dm.tick(tps=20) # this will ensure ur gameloop runs at 20 ticks per second
 ```
 
 ## Creating the window:

@@ -50,7 +50,7 @@ class Render(Class_Data):
 
     def add_bind(self, event, button, func):
         if event not in self.events:
-            loger.error(f"Render type class dose not yet support events of that type , error in {type(self)} with id of {self.id}")
+            logger.error(f"Render type class dose not yet support events of that type , error in {type(self)} with id of {self.id}")
             return
         sub_container = self.events[event]
 
@@ -140,13 +140,13 @@ class Layer(Render):
 
     def add_obj(self,obj):
         if obj == self:
-            loger.error(f"cannot add self to self")
+            logger.error(f"cannot add self to self")
         self.objs.append(obj)
     def remove_obj(self,obj):
         if obj in self.objs:
             self.objs.remove(obj)
         else:
-            loger.error(f"obj {obj} is not in layer {self.id}")
+            logger.error(f"obj {obj} is not in layer {self.id}")
     def get_obj_from_id(self,obj_id:int):
         for obj in self.objs:
             if obj.id == obj_id:
@@ -155,7 +155,7 @@ class Layer(Render):
         try:
             return self.objs[index]
         except IndexError:
-            loger.log(f"index {index} not in Layer {self.id}'s list")
+            logger.log(f"index {index} not in Layer {self.id}'s list")
             return None
 
     def _update_objs(self,events):
@@ -230,7 +230,7 @@ class Chunked_Layer(Render):
         if (cx,cy) in self._tiles:
             self._tiles.pop((cx,cy))
             return
-        loger.log(f"chunk ({cx},{cy}) dose not exsist in Chunk_Layer {self.id}")
+        logger.log(f"chunk ({cx},{cy}) dose not exsist in Chunk_Layer {self.id}")
     
     def cpos_to_pos(self,cx:int,cy:int):
         "converts chunk pos to normal pos"
@@ -241,7 +241,7 @@ class Chunked_Layer(Render):
 
     def chunk_obj(self,obj:"Render"):
         if obj == self:
-            loger.error(f"cannot chunk obj self into self")
+            logger.error(f"cannot chunk obj self into self")
         pos = obj.get_pos()
         cpos = self.pos_to_cpos(pos[0],pos[1])
         tile = self.get_tile(cpos[0],cpos[1])
@@ -500,14 +500,14 @@ class Display_Manager(Class_Data):
         self.running = True
         self.rendering_thread = threading.Thread(target=self._rendering_loop, daemon=True)
         self.rendering_thread.start()
-        loger.log("Rendering thread started")
+        logger.log("Rendering thread started")
 
     def STOP_RENDERING_THREAD(self):
         """did you know that this stops the rendering thread"""
         if self.rendering_thread and self.rendering_thread.is_alive():
             self.running = False
             self.rendering_thread.join() 
-        loger.log("Rendering thread stopped")
+        logger.log("Rendering thread stopped")
 
     def _exacute_funcs(self,funcs,*peramiters):
         for func in funcs:
@@ -537,10 +537,10 @@ class Display_Manager(Class_Data):
                 self._event_que = events
                 for event in events:
                     if event.type == pygame.KEYDOWN:
-                        funcs = self.keybinds["down"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keydonw)")])
+                        funcs = self.keybinds["down"].get(event.key,[lambda : logger.log(f"key {event.key} is not bound (keydonw)")])
                         self._exacute_funcs(funcs)
                     if event.type == pygame.KEYUP:
-                        funcs = self.keybinds["up"].get(event.key,[lambda : loger.log(f"key {event.key} is not bound (keyup)")])
+                        funcs = self.keybinds["up"].get(event.key,[lambda : logger.log(f"key {event.key} is not bound (keyup)")])
                         self._exacute_funcs(funcs)
 
                     if event.type == pygame.QUIT:
@@ -559,7 +559,7 @@ class Display_Manager(Class_Data):
                         print("\nquit pressed\n")
                         self.STOP_RENDERING_THREAD()
         except Exception as e:
-            loger.log(f"error in event handeling: {e}")
+            logger.log(f"error in event handeling: {e}")
             events = []
 
     def blit(self,source: "pygame.Surface", dest: "pygame.RectLike" = (0, 0), area: "pygame.RectLike" = None, special_flags: "int" = 0):
@@ -568,7 +568,7 @@ class Display_Manager(Class_Data):
         try:
             self.display.blit(source,dest,area,special_flags)
         except Exception as e:
-            loger.error(f"failed to blit surf to display due to {e}")
+            logger.error(f"failed to blit surf to display due to {e}")
 
     def fill(self,color:"tuple"=(0,0,0,0),rect:"pygame.Rect"=None,special_flags:"int"=0):
         """self.display.fill(...)"""
@@ -576,7 +576,7 @@ class Display_Manager(Class_Data):
         try:
             self.display.fill(color,rect,special_flags)
         except Exception as e:
-            loger.error(f"failed to fill display withg {color} due to {e}")
+            logger.error(f"failed to fill display withg {color} due to {e}")
             
     def get_display(self):
         return self.display
@@ -616,14 +616,14 @@ class Display_Manager(Class_Data):
     def _remove_bind(self,_type,key,funcs):
         funcs = funcs if isinstance(funcs,(tuple,list)) else [funcs]
         if key not in self.keybinds[_type]:
-            loger.log(f"invalid key {key} (try using pygame.K_...)")
+            logger.log(f"invalid key {key} (try using pygame.K_...)")
             return
         binds = self.keybinds[_type][key]
         for func in funcs:
             try:
                 binds.remove(func)
             except ValueError:
-                loger.log(f"function to {key} not found. func->{func}")
+                logger.log(f"function to {key} not found. func->{func}")
         if not binds:
             del self.keybinds[_type][key]
 
