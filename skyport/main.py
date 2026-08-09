@@ -416,7 +416,7 @@ class Display_Manager(Class_Data):
     def __init__(self,window_size:"tuple",display_size:"tuple",force_full_screen:bool=False,window_name:str="skyport-engine window",window_ico:"pygame.Surface"=None,resizable:bool=True,root_layer=None,post_render_hook=None,pre_render_hook=None):
         super().__init__()
         self._base_init()
-        self.root_layer = root_layer if root_layer != None else Layer(display_size[0],display_size[1],fill_color=(0,0,0,0))
+        self.root_layer = root_layer if root_layer != None else Layer(display_size[0],display_size[1],fill_color=(0,0,0))
         self._user_clock = pygame.time.Clock()
         self.rendering_thread = None
         self.loops = 0

@@ -23,9 +23,9 @@ class Hitbox(Class_Data):
         self._setup(angle,on_collide)
 
     @classmethod
-    def from_points(cls,points,angle:"int"=0,on_collide=None):
+    def from_points(cls,points,angle:"int"=0,hole_points=None,on_collide=None):
         self = cls.__new__(cls)
-        self.OG_shape = shapely.geometry.Polygon(points)
+        self.OG_shape = shapely.geometry.Polygon(points,hole_points)
         self._setup(angle,on_collide)
         return self
 
@@ -54,6 +54,7 @@ class Hitbox(Class_Data):
                 if self.on_collide != None:
                     self.on_collide()
                 return True
+            return False
         except Exception as e:
             logger.error(f"could not couculate a collision between {type(self)} with id of {self.id} and {type(other_hitbox)} . e -> {e}")
             return False
@@ -94,7 +95,7 @@ class Hitbox_Manager(Class_Data):
     def get_colliding(self):
         colliding = {}
         for h1 in self.hitboxes:
-            colliding[h1] = []
+            colliding[h1.id] = []
             for h2 in self.hitboxes:
                 if h1.collide(h2):
                     colliding[h1.id].append(h2.id)

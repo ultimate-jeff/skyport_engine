@@ -49,7 +49,7 @@ REZ_DCI_4K = (4096,2160)
 REZ_5K = (5120,2880)
 REZ_8K = (7680,4320)
 
-__version__ = "0.2.25"
+__version__ = "0.2.26"
 
 from .global_utils import (
     Loader,
@@ -74,6 +74,10 @@ from .main import (
 #from . import audio
 
 from .modules import decorators
+from .modules.hitbox import (
+    Hitbox,
+    Hitbox_Manager
+)
 
 def _set_recursion_depth(depth=1500):
     from global_utils import sys

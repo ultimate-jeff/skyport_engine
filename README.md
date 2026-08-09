@@ -503,6 +503,7 @@ the Render class would just automatically handle image scaling and rotating
 Note: ``` most of the time image updating is automatic when you use set_angle or set_size but if you mod the OG image you will have to call my_class_instance.update_surf() for it to update (this might change in a later update) ```
 
 Note2: ``` x and y are not stored inside of the Render instead they are stored inside Render.rect.x / Render.rect.y ```
+Note3:``` to direnctly fill / modify the sirface its instance.OG_image not instance.surf ```
 ### Render binds:
 each render can have binds like a button
 
@@ -716,8 +717,31 @@ def my_func():
     ...
 # now this function can only be called once per class instance
 ```
+## hitbox system
+skyport has a hitbox system built on top of shapely 
+### Hitbox class
+the decalt Hitbox is a bit like the pygame.Rect but using shapely 
+```python
+hitbox1 = skyport.Hitbox(x=1,y=5,width=50,height=50,angle=45,on_collide=lambda : print("hitbox has collided"))
+
+hitbox2 = skyport.Hitbox.from_points([...],angle=20,on_collide=lambda : print("non rectangle polygon has collided with other shape "))
+
+if hitbox1.collide(hitbox2):
+    print("collision!")
+else:
+    print("no colision!")
+```
+hitboxes have getters and setter like
+- get_pos : gets (x,y)
+- get_bounds : gets the bounds (minX,minY,maxX,maxY)
+- get_width_height : gets (width,height)
+- set_pos(x,y)
+- translate(self,dx,dy) 
+- set_angle(self,angle)
+
+
 ## audio engine 
-an audio engine will be coming to skyport in later updates
+an audio engine will be coming to skyport in later updates (it uses hitbox system)
 
 
 # dev_info:
