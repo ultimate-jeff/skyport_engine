@@ -1,7 +1,9 @@
 from ..global_utils import (
     pygame,
-    math,
     Class_Data
+)
+from ..imports import (
+    math
 )
 class Sound(Class_Data):
     def __init__(self,sound:"pygame.Sound",x,y,max_dist=math.inf,strenth=1.0,base_vol=1):

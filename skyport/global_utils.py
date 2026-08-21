@@ -1,46 +1,5 @@
 
-import inspect
-import os
-import sys
-import pathlib as pl
-import json
-import csv
-import tomllib
-import threading
-import math
-import numpy as np
-import time
-import random
-
-import pygame
-sys.setrecursionlimit(1500) 
-
-pygame.init()
-
-base_dir = pl.Path(__file__).resolve().parent
-
-prin_RED = '\033[91m'
-prin_GREEN = '\033[92m'
-prin_BLUE = '\033[94m'
-prin_RESET = '\033[0m'
-print_YELLOW = '\033[33m'
-print_MAGENTA = '\033[35m'
-print_CYAN = '\033[36m'
-prin_ORANGE = '\033[38;5;208m'
-prin_PINK = '\033[38;5;206m'
-prin_PURPLE = '\033[38;5;129m'
-prin_BROWN = '\033[38;5;94m'
-prin_GOLD = '\033[38;5;220m'
-prin_LIME = '\033[38;5;118m'
-prin_TEAL = '\033[38;5;30m'
-prin_NAVY = '\033[38;5;18m'
-prin_SKY_BLUE = '\033[38;5;117m'
-prin_HOT_PINK = '\033[38;5;198m'
-prin_MAROON = '\033[38;5;88m'
-prin_OLIVE = '\033[38;5;100m'
-prin_VIOLET = '\033[38;5;93m'
-prin_SALMON = '\033[38;5;209m'
-prin_DARK_GREEN = '\033[38;5;22m'
+from .imports import *
 
 class Class_Data:
     instances = 0
@@ -104,6 +63,57 @@ class Logger(Class_Data):
             self.output_print_data()
                 
 logger = Logger()
+
+
+class Interacotr(Class_Data):
+    def _base_init(self):
+        self.events = {
+            pygame.KEYDOWN:{}, # key:[funcs(self,event)...] 
+            pygame.KEYUP:{},
+            "key_pressed":{}, # key:[funcs(self,event)...]
+            pygame.MOUSEBUTTONDOWN:{}, # key:[funcs(self,event)...]
+            pygame.MOUSEBUTTONUP:{},
+            "mouse_pressed":{} # key:[funcs(self,event)...]
+        }
+        
+    def __init__(self):
+        super().__init__()
+        self._base_init()
+
+    def _handle_events(self,events): # i need to optomize this to loop over self.events instead of events
+        for event in events:
+            if event.type in self.events:
+                sub_dict = self.events[event.type]
+                lookup_key = getattr(event, 'key', getattr(event, 'button', None))
+                if lookup_key in sub_dict:
+                    for func in sub_dict[lookup_key]:
+                        if hasattr(func,"__self__"):
+                            func(event)
+                        else:
+                            func(self, event)
+
+    def add_bind(self, event, button, func):
+        if event not in self.events:
+            logger.error(f"Render type class dose not yet support events of that type , error in {type(self)} with id of {self.id}")
+            return
+        sub_container = self.events[event]
+
+        if isinstance(sub_container, list):
+            if isinstance(func, (list, tuple)):
+                sub_container.extend(func)
+            else:
+                sub_container.append(func)
+            return
+        if button not in sub_container:
+            sub_container[button] = []
+        if isinstance(func, (list, tuple)):
+            sub_container[button].extend(func)
+        else:
+            sub_container[button].append(func)
+
+    def _update_(self,events):
+            self._handle_events(events)
+
 
 
 class Util(Class_Data):

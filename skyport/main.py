@@ -1,25 +1,23 @@
 
 
-from skyport.global_utils import *
+#from skyport.global_utils import *
+from .imports import *
+from .global_utils import (
+    Interacotr,
+    logger,
+    Class_Data
+)
 from pygame import _sdl2 as video
 
 pygame.display.init()
 pygame.joystick.init()
 pygame.font.init()
+
 pygame.display.set_mode((1, 1), pygame.HIDDEN)
 
 
-class Render(Class_Data):
-    #Button_Decorator = staticmethod(Button_Decorator)
-    def _base_init(self):
-        self.events = {
-            pygame.KEYDOWN:{}, # key:[funcs(self,event)...] 
-            pygame.KEYUP:{},
-            "key_pressed":{}, # key:[funcs(self,event)...]
-            pygame.MOUSEBUTTONDOWN:{}, # key:[funcs(self,event)...]
-            pygame.MOUSEBUTTONUP:{},
-            "mouse_pressed":{} # key:[funcs(self,event)...]
-            }
+class Render(Interacotr):
+
     def __init_texture(self,surf,width,height):
         self.OG_image = surf if surf != None else pygame.Surface((width,height),flags=pygame.SRCALPHA)
 
@@ -35,37 +33,6 @@ class Render(Class_Data):
         self._last_size = None
         self._is_dirty = True
         self.update_surf()
-
-    def _handle_events(self,events): # i need to optomize this to loop over self.events instead of events
-        for event in events:
-            if event.type in self.events:
-                sub_dict = self.events[event.type]
-                lookup_key = getattr(event, 'key', getattr(event, 'button', None))
-                if lookup_key in sub_dict:
-                    for func in sub_dict[lookup_key]:
-                        if hasattr(func,"__self__"):
-                            func(event)
-                        else:
-                            func(self, event)
-
-    def add_bind(self, event, button, func):
-        if event not in self.events:
-            logger.error(f"Render type class dose not yet support events of that type , error in {type(self)} with id of {self.id}")
-            return
-        sub_container = self.events[event]
-
-        if isinstance(sub_container, list):
-            if isinstance(func, (list, tuple)):
-                sub_container.extend(func)
-            else:
-                sub_container.append(func)
-            return
-        if button not in sub_container:
-            sub_container[button] = []
-        if isinstance(func, (list, tuple)):
-            sub_container[button].extend(func)
-        else:
-            sub_container[button].append(func)
 
     def _scale(self):
         size = self.rect.size
@@ -125,9 +92,6 @@ class Render(Class_Data):
 
     def force_update(self):
         self.update_surf(True)
-
-    def _update_(self,events):
-        self._handle_events(events)
 
     def update(self):
         pass
@@ -410,7 +374,7 @@ class Display_Manager(Class_Data):
             "joy_button_down":{},
 
             }
-        self._event_que = {}
+        self.event_que = {}
         self.joysticks = []
 
     def __init__(self,window_size:"tuple",display_size:"tuple",force_full_screen:bool=False,window_name:str="skyport-engine window",window_ico:"pygame.Surface"=None,resizable:bool=True,root_layer=None,post_render_hook=None,pre_render_hook=None):
@@ -455,7 +419,7 @@ class Display_Manager(Class_Data):
         self.center_x = self.display.get_width() / 2
         self.center_y = self.display.get_height() / 2
 
-    def get_mouse_pos(self) -> "tuple(x,y)":
+    def get_mouse_pos(self) -> "tuple":
         """returns (x,y) of your mouse relative to the window"""
         mx, my = pygame.mouse.get_pos()
         self.mouse_pos = (((mx - self._W_pos[0]) / self._scale),((my - self._W_pos[1]) / self._scale))
@@ -463,7 +427,7 @@ class Display_Manager(Class_Data):
 
     def update_root_layer(self):
         """this updates the rood layer but do not call unless you set update__root_layers to False and want to manualy manage Render updating """
-        self.root_layer._update_(self._event_que)
+        self.root_layer._update_(self.event_que)
         self.root_layer.update()
         rect = self.root_layer.rect
         self.display.blit(
@@ -534,7 +498,7 @@ class Display_Manager(Class_Data):
                     self._handle_joystick_buttons(self.keybinds["joy_button_down"])
                     self._handle_joystick_buttons(self.keybinds["joy_button_up"])
                 events = pygame.event.get()
-                self._event_que = events
+                self.event_que = events
                 for event in events:
                     if event.type == pygame.KEYDOWN:
                         funcs = self.keybinds["down"].get(event.key,[lambda : logger.log(f"key {event.key} is not bound (keydonw)")])

@@ -49,16 +49,20 @@ REZ_DCI_4K = (4096,2160)
 REZ_5K = (5120,2880)
 REZ_8K = (7680,4320)
 
-__version__ = "0.2.26"
+__version__ = "0.2.27"
+
+from .imports import pygame
+from . import imports
 
 from .global_utils import (
     Loader,
     logger,
-    Util,pygame,
+    Util,
     Delta_timer,
     Save_file,
     Load_file,
-    Class_Data
+    Class_Data,
+    Interacotr
     )
 from .main import (
     Display_Manager,
@@ -71,9 +75,9 @@ from .main import (
     Camera
     )
 
-#from . import audio
-
 from .modules import decorators
+
+from .modules import hitbox
 from .modules.hitbox import (
     Hitbox,
     Hitbox_Manager
@@ -82,5 +86,6 @@ from .modules.hitbox import (
 def _set_recursion_depth(depth=1500):
     from global_utils import sys
     sys.setrecursionlimit(depth) 
+
 def quit():
     pygame.quit()

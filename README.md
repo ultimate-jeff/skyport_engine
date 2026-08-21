@@ -88,7 +88,7 @@ skyport has some resolution templates such as
 ```python
 skyport.REZ_1080p
 
-skyport.RES_4k
+skyport.REZ_4k
 ```
 all the resolution presets are skyport.REZ_...
 
@@ -155,6 +155,8 @@ Creating the game loop is very simple.
 ## keybinds and event handler :
 there are 3 types of binds : key up , key down , key pressed
 these you can bind any function to any of the 3 types and you can have multiple functions on 1 key
+
+Note : if you need the pygame event's you can get them via pygame.event.get() or by display_manager.event_que ( the display managers event que is updated every frame )
 ### adding and removing binds :
 to add or to remove a bind you can call its add or remove method for the type
 ```python
@@ -294,6 +296,15 @@ loader.save(img,"my_images/new_img.jpeg")
 
 ## more will come ...
 as of the current version the documentation on how to get started with skyport is not complete and will be in later updates
+
+# imports :
+skyport uses many modules including pygame and if you want to access the other modules skyport uses you can see them by doing the following  
+```python
+
+math = skyport.imports.math
+# there are more modules but they are all inside .imports
+
+```
 
 # examples :
 
@@ -488,6 +499,32 @@ time_dif = dt.get_dt()
 ```
 get_dt returns the difference in time from when the instance is created to the call of get_dt and then if you call it again it returns the difference in time from the last call to the current call
  
+## Interactor :
+the interactor class is a class that class instance handles inputs and can respond to inputs independantly of other classes 
+
+Note : the Interactor class is meant to be used with other classes like the Render or the Hitbox class 
+
+### example usage :
+```python
+
+class My_class(skyport.Interactor):
+    def __init__(self, ... ):
+        super().__init__()
+        ...
+
+    def move_left(self):
+        ...
+
+
+instance = My_class( ... )
+
+# this will now make it that when you press a this specific instance of My_class will call its move_left method 
+instance.add_bind(pygame.KEYDOWN, pygame.K_a, instance.move_left)
+
+# to actualy get this to handle the events you need to get pygame's events and pass them into the classes ._handle_events method which for some classes managers like Renders is done automaticly 
+
+```
+
 ## Render :
 the render class is a data class holding data like rect,x,y,angle,surface and has a couple utility tools and it was made to be used like :
 ```python
@@ -505,7 +542,7 @@ Note: ``` most of the time image updating is automatic when you use set_angle or
 Note2: ``` x and y are not stored inside of the Render instead they are stored inside Render.rect.x / Render.rect.y ```
 Note3:``` to direnctly fill / modify the sirface its instance.OG_image not instance.surf ```
 ### Render binds:
-each render can have binds like a button
+each render can have binds like a button because they inherit from the Interactor class
 
 to add a bind to a Render type obj you go
 ```python
@@ -720,11 +757,13 @@ def my_func():
 ## hitbox system
 skyport has a hitbox system built on top of shapely 
 ### Hitbox class
-the decalt Hitbox is a bit like the pygame.Rect but using shapely 
+the default Hitbox is a bit like the pygame.Rect but using shapely and its also interactable like Renders because it inherits from the Interactor class
 ```python
 hitbox1 = skyport.Hitbox(x=1,y=5,width=50,height=50,angle=45,on_collide=lambda : print("hitbox has collided"))
 
 hitbox2 = skyport.Hitbox.from_points([...],angle=20,on_collide=lambda : print("non rectangle polygon has collided with other shape "))
+
+hitbox1.set_angle(hitbox1.angle + 30) # you can rotate hitboxes
 
 if hitbox1.collide(hitbox2):
     print("collision!")

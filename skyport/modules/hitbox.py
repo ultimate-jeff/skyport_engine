@@ -1,13 +1,15 @@
 from ..global_utils import (
-    math,
-    pygame,
     Class_Data,
-    logger
+    logger,
+    Interacotr
+)
+from ..imports import (
+    shapely,
+    pygame,
+    math
 )
 
-import shapely
-
-class Hitbox(Class_Data):
+class Hitbox(Interacotr):
     def _setup(self,angle=0,on_collide=None):
         super().__init__()
         self.angle = angle
