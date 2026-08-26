@@ -21,7 +21,7 @@ class Raw_Render(Class_Data):
     def __init_texture(self,surf,width,height):
         self.OG_image = surf if surf != None else pygame.Surface((width,height),flags=pygame.SRCALPHA)
 
-    def __init__(self,x:"int",y:"int",width:"int",height:"int",angle:"int",surf:"pygame.Surface"=None,tags:dict=None):
+    def __init__(self,x:"int",y:"int",width:"int",height:"int",angle:"int",surf:"pygame.Surface"=None,tags:dict=None,_auto_init_update=True):
         """this class is meant to be inherited by other classes or used in them so like class MyGameObj(Render): ...."""
         super().__init__()
         self.tags = tags if tags != None else {}
@@ -32,7 +32,8 @@ class Raw_Render(Class_Data):
         self._last_angle = None
         self._last_size = None
         self._is_dirty = True
-        self.update_surf()
+        if _auto_init_update:
+            self.update_surf()
 
     def _scale(self):
         size = self.rect.size
@@ -362,13 +363,6 @@ class Font_Render(Render):
 
 class Animated_Render(Render):
     def __init__(self, x, y, width:"int", height:"int", angle:"int"=0, frames:"list"=None,fps:"int"=1,starting_frame:"int"=0,surf=None,loops:int=1, tags=None):
-        super().__init__(
-            x, y,
-            width, height, 
-            angle, 
-            surf, 
-            tags
-            )
         self.frame_index = starting_frame
         #self._last_frame_index = None
         self._frame_duration  = 1 / fps if fps > 0 else 0.0000000001
@@ -379,9 +373,17 @@ class Animated_Render(Render):
         if not isinstance(frames,(list,tuple)):
             logger.error(f"wrone type for frames",TypeError,2)
             self.frames = [surf if surf != None else pygame.Surface((width,height))]
-        self.frames = frames
+        else:
+            self.frames = frames
         self._total_frames = len(frames)
         self.dt = Delta_timer()
+        super().__init__(
+            x, y,
+            width, height, 
+            angle, 
+            surf, 
+            tags
+        )
 
     def _update_frame_index(self):
         self._elapsed += self.dt.get_dt()
@@ -579,6 +581,10 @@ class Display_Manager(Class_Data):
         except Exception as e:
             logger.log(f"error in event handeling: {e}")
             events = []
+
+    def update(self,tps=60):
+        self.event_handler()
+        self.tick(tps)
 
     def blit(self,source: "pygame.Surface", dest: "pygame.RectLike" = (0, 0), area: "pygame.RectLike" = None, special_flags: "int" = 0):
         """self.display.blit(.....)"""
