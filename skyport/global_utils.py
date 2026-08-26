@@ -4,25 +4,24 @@ from .imports import *
 class Class_Data:
     instances = 0
     def __init__(self):
+        if getattr(self,"_class_data_initialized",False):
+            return
+        self._class_data_initialized = True
         type(self).instances += 1
         self.id = type(self).instances
         self.tags = {}
     def random_function(self):
         try:
-            import skyport as sp
-
-            dm = sp.Display_Manager(
-                window_size=sp.REZ_SVGA,
-                display_size=sp.REZ_1080p,
-                window_name="this is the random function"
-            )
-            dm.START_RENDERING_THREAD(60)
-            while dm.running:
-
-                dm.event_handler()
-                dm.tick(20)
+            choice = (self.id ^ len(self.tags.keys()) + 32) % type(self).instances
+            if choice == 2:
+                time.sleep(choice)
+            if choice > 5:
+                print(f"wow you actualy managed to make 5 or more {type(self)} instances")
+            else:
+                pass
+            
         except Exception as e:
-            print(f"sry for the let down the random function dose nothing with these conditions. error->{e}")
+            print(f"srry this function dose nothing oops    !!-{e}-!!")
 
 class Logger(Class_Data):
     def __init__(self):
@@ -65,7 +64,7 @@ class Logger(Class_Data):
 logger = Logger()
 
 
-class Interacotr(Class_Data):
+class Interacotr():
     def _base_init(self):
         self.events = {
             pygame.KEYDOWN:{}, # key:[funcs(self,event)...] 
@@ -77,7 +76,6 @@ class Interacotr(Class_Data):
         }
         
     def __init__(self):
-        super().__init__()
         self._base_init()
 
     def _handle_events(self,events): # i need to optomize this to loop over self.events instead of events

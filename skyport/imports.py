@@ -42,3 +42,8 @@ prin_OLIVE = '\033[38;5;100m'
 prin_VIOLET = '\033[38;5;93m'
 prin_SALMON = '\033[38;5;209m'
 prin_DARK_GREEN = '\033[38;5;22m'
+
+def get_text_color(color:"tuple"):
+    return f"\033[{color[0]};{color[1]};{color[2]}m"
+def get_colord_text(color:"tuple",text):
+    return f"{get_text_color(color)}{text}{prin_RESET}"

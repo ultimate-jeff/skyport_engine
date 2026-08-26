@@ -564,6 +564,25 @@ my_render_instance.add_bind(event=pygame.MOUSEBUTTONDOWN,,button=1,funt=on_click
 ```
 now when the mouse clicks on this Render instance it will print the data
 
+## Raw_Render :
+the raw render is the exact same as a Render exept it dose not have the interacable event handler stuff like the normal Render 
+
+## Animated_Render :
+the animated render is a render that will auto cycle through a set of frames 
+
+the only thing that changes from this vs a normal Render is the cunstructor peramiters and how it audo cycles through a set of frames
+
+```python
+
+animation = skyort.Animated_Render(x=2, y=10, width=2, height=2, angle=45, frames=[image1,image2,image3],fps=35,...)
+
+# this will update the Animated_render and increment the frame if needed 
+animation.update_surf()
+# Note this is automaticly called most of the time
+
+
+```
+
 ## Layer :
 the layer can hold many objs that inherit the from Render class and then it will automatically render them to the display every frame and it will call the update function of the Render class every frame
 

@@ -5,7 +5,8 @@ from .imports import *
 from .global_utils import (
     Interacotr,
     logger,
-    Class_Data
+    Class_Data,
+    Delta_timer
 )
 from pygame import _sdl2 as video
 
@@ -15,16 +16,15 @@ pygame.font.init()
 
 pygame.display.set_mode((1, 1), pygame.HIDDEN)
 
-
-class Render(Interacotr):
+class Raw_Render(Class_Data):
 
     def __init_texture(self,surf,width,height):
         self.OG_image = surf if surf != None else pygame.Surface((width,height),flags=pygame.SRCALPHA)
 
-    def __init__(self,x:"int",y:"int",width:"int",height:"int",angle:"int",surf:"pygame.Surface"=None,tags:dict={}):
+    def __init__(self,x:"int",y:"int",width:"int",height:"int",angle:"int",surf:"pygame.Surface"=None,tags:dict=None):
         """this class is meant to be inherited by other classes or used in them so like class MyGameObj(Render): ...."""
         super().__init__()
-        self.tags = tags
+        self.tags = tags if tags != None else {}
         self._base_init()
         self.rect = pygame.Rect(x,y,width,height)
         self.angle = angle
@@ -95,6 +95,11 @@ class Render(Interacotr):
 
     def update(self):
         pass
+
+class Render(Raw_Render,Interacotr):
+    def __init__(self, x, y, width, height, angle, surf = None, tags = {}):
+        Raw_Render.__init__(self,x,y,width,height,angle,surf,tags)
+        Interacotr.__init__(self)
 
 class Layer(Render):
     def __init__(self,width:"int", height:"int" , x:"int"=0, y:"int"=0, angle:"int"=0, surf:"pygame.Surface" = None,fill_color:"tuple"=None):
@@ -306,7 +311,7 @@ class Camera(Layer):
         
 class Font_Render(Render):
     Sys_fonts = pygame.font.get_fonts()
-    def __init__(self,font:"pygame.font.Font", text:str ,x:"int", y:"int", width:"int", height:"int",text_color:"tuple"=(0,0,0),font_size:"int"=50, angle:"int"=0,tags:dict={},word_wrapping:bool=True,bg_color:"tuple"=(0,0,0,0)):
+    def __init__(self,font:"pygame.font.Font", text:str ,x:"int", y:"int", width:"int", height:"int",text_color:"tuple"=(0,0,0),font_size:"int"=50, angle:"int"=0,tags:dict=None,word_wrapping:bool=True,bg_color:"tuple"=(0,0,0,0)):
         self.text = text
         self.text_color = text_color
         self._last_text = None
@@ -354,6 +359,55 @@ class Font_Render(Render):
             self._scale()
             self._rotate()
             self._is_dirty = False
+
+class Animated_Render(Render):
+    def __init__(self, x, y, width:"int", height:"int", angle:"int"=0, frames:"list"=None,fps:"int"=1,starting_frame:"int"=0,surf=None,loops:int=1, tags=None):
+        super().__init__(
+            x, y,
+            width, height, 
+            angle, 
+            surf, 
+            tags
+            )
+        self.frame_index = starting_frame
+        #self._last_frame_index = None
+        self._frame_duration  = 1 / fps if fps > 0 else 0.0000000001
+        self.fps = fps
+        self.loops = loops
+        self.playing = True
+        self._elapsed = 0
+        if not isinstance(frames,(list,tuple)):
+            logger.error(f"wrone type for frames",TypeError,2)
+            self.frames = [surf if surf != None else pygame.Surface((width,height))]
+        self.frames = frames
+        self._total_frames = len(frames)
+        self.dt = Delta_timer()
+
+    def _update_frame_index(self):
+        self._elapsed += self.dt.get_dt()
+        if self._elapsed >= self._frame_duration:
+            self._elapsed = 0
+            new_fi = (self.frame_index + 1) % self._total_frames
+            if abs(self.frame_index - new_fi) > 1:
+                self.loops -= 1
+            if self.loops > 0:
+                self.frame_index = new_fi
+            self._is_dirty = True
+        return self.frame_index
+
+    def _update_(self,events):
+        self._handle_events(events)
+        #self._update_frame_index()
+        #self.OG_image = (self.frames[self.frame_index])
+
+    def update_surf(self, forced=False):
+        """this updates the self.image so that it is the corect scale and angle"""
+        self._is_dirty |=  forced
+        self._update_frame_index()
+        self.OG_image = (self.frames[self.frame_index])
+        self._scale()
+        self._rotate()
+        self._is_dirty = False
 
 
 
