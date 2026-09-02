@@ -103,10 +103,11 @@ class Render(Raw_Render,Interacotr):
         Interacotr.__init__(self)
 
 class Layer(Render):
-    def __init__(self,width:"int", height:"int" , x:"int"=0, y:"int"=0, angle:"int"=0, surf:"pygame.Surface" = None,fill_color:"tuple"=None):
+    def __init__(self,width:"int", height:"int" , x:"int"=0, y:"int"=0, angle:"int"=0, surf:"pygame.Surface" = None,fill_color:"tuple"=None,fill_every_frame=True):
         super().__init__(x, y, width, height, angle, surf)
         self.objs = []
         self.fill_color = fill_color if fill_color != None else (0,0,0,0) 
+        self.fill_every_frame = fill_every_frame
 
     def add_obj(self,obj):
         if obj == self:
@@ -129,7 +130,8 @@ class Layer(Render):
             return None
 
     def _update_objs(self,events):
-        self.OG_image.fill(self.fill_color)
+        if self.fill_every_frame:
+            self.OG_image.fill(self.fill_color)
         for i,obj in enumerate(self.objs):
             obj.update_surf(True)
             obj._update_(events)
