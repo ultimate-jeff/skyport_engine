@@ -3,13 +3,17 @@ from .imports import *
 
 class Class_Data:
     instances = 0
-    def __init__(self):
+    def __init__(self,tags=None):
         if getattr(self,"_class_data_initialized",False):
             return
         self._class_data_initialized = True
         type(self).instances += 1
         self.id = type(self).instances
-        self.tags = {}
+        self.tags = {} if tags == None else tags
+    def release_id(self,amount=1):
+        # this is to free up id's
+        type(self).instances -= amount
+
     def random_function(self):
         try:
             choice = (self.id ^ len(self.tags.keys()) + 32) % type(self).instances
@@ -43,7 +47,9 @@ class Logger(Class_Data):
         print("---------------")
         self._errors.clear()
         self._logs.clear()
-    def error(self,msg:"str",error=None,metadata:"str"="",sevarity_index:"int"=0):
+    def error(self,msg:"str",error=None,metadata:"str"="",sevarity_index:"int"=0,_already_handled_error=False):
+        if _already_handled_error:
+            return
         if error == None:
             self._errors.append(f"{self.sevarity_index[sevarity_index]}!!- error -> {msg} , extra_data -> {metadata} -!!{prin_RESET}")
             if sevarity_index >= 3:
@@ -51,10 +57,14 @@ class Logger(Class_Data):
                 exit(1)
             return None     
         else:
-            self._errors.append(f"{self.sevarity_index[sevarity_index]}!!- error -> {msg} , extra_data -> {metadata} , python error : {self.error}-!!{prin_RESET}")
+            self._errors.append(f"{self.sevarity_index[sevarity_index]}!!- error -> {msg} , extra_data -> {metadata} , python error : {error}-!!{prin_RESET}")
             if sevarity_index >= 3:
                 self.output_print_data()
                 exit(1)
+    def get_last_error(self):
+        return self._errors[-1]
+    def get_last_log(self):
+        return self._logs[-1]
     def has_logs(self):
         return (self._errors != [] and self._logs != [])
     def print(self):
@@ -217,19 +227,14 @@ class Loader(Class_Data):
             self.supported_types[t] = lambda p: pygame.image.load(p).convert()
         for t in Loader._suported_audio_formats:
             self.supported_types[t] = pygame.mixer.Sound
-    def init():
-        loader = Loader(Loader.error_asset_bace_dir)
+
+    def init(self,_is_internal_call=False):
+        loader = Loader(Loader.error_asset_bace_dir,{"is_internal":_is_internal_call})
         Loader.error_asset_map["image"] = loader.read("assets/images/error.png")
-        Loader.error_asset_map["sound"] = loader.read("assets/sounds/errpr.mp3")
+        Loader.error_asset_map["sound"] = loader.read("assets/sounds/error.mp3")
         Loader.error_asset_map["data"] = loader.read("assets/data/error.json")
 
-    def __init__(self,dunder_file=None):
-        super().__init__()
-        if(dunder_file == None):
-            call_frame = inspect.stack()[1]
-            dunder_file = call_frame.filename
-        self.base_dir = pl.Path(dunder_file).resolve().parent
-        self.tags = {}
+    def _setup(self):
         self._map = {}
         self._error_assets = {}
         self.supported_types = {
@@ -237,7 +242,7 @@ class Loader(Class_Data):
             ".json": Load_file(json.load),
             ".csv": Load_file(lambda f: list(csv.reader(f))),
             ".bin":  Load_file(lambda f: f.read(),"rb"),
-            ".toml": Load_file(lambda f: tomllib.load(f))
+            ".toml": Load_file(lambda f: _load_toml(f))
         } # unknow types will be read as a bynary 
         self.unsupported_handler = None
         self.supported_savers = {
@@ -249,7 +254,21 @@ class Loader(Class_Data):
             ".csv": self._save_csv,
             ".bin": Save_file(lambda f, d: f.write(d)),
         }
+
+    def __init__(self,dunder_file=None,tags=None):
+        super().__init__(tags)
+        if(dunder_file == None):
+            call_frame = inspect.stack()[1]
+            dunder_file = call_frame.filename
+        self.base_dir = pl.Path(dunder_file).resolve().parent
+        self._setup()
         self._init_supported_types()
+
+        # this is to auto load the error assets
+        if not Loader.error_asset_map and not self.tags.get("is_internal") == True:
+            logger.log(f"created Loader instance with id of {self.id} and initialized error assets")
+            self.init(True)
+
     def _save_csv(self, path, data):
         if not isinstance(data, list):
             logger.error(f"CSV saver expected a list of rows, got {type(data)}")
@@ -261,7 +280,7 @@ class Loader(Class_Data):
         path = pl.Path(path)
         if(path.is_absolute() ):
             return path.resolve()
-        return (base_dir / path).resolve()
+        return (self.base_dir / path).resolve()
     def add_new_file_handler(self,type_extension:str,handler:"callable"):
         """examle : sp.Load_file(lambda file_obj: file_obj.read())"""
         self.supported_types[type_extension] = handler
@@ -288,7 +307,7 @@ class Loader(Class_Data):
         return self._map
     def set_map(self,mapp):
         self._map = mapp
-    def _load_file(self,path):
+    def _load_file(self,path,_already_handled_error=False):
         path = self.resolve_path(path)
         extension = os.path.splitext(path)[1].lower()
         if extension in self.supported_types:
@@ -296,13 +315,13 @@ class Loader(Class_Data):
         else:
             loader = self.unsupported_handler
             if loader is None:
-                logger.error(f"unsupported type {extension} while loading {path}, ( returning None )")
+                logger.error(f"unsupported type {extension} while loading {path}, ( returning None )",_already_handled_error=_already_handled_error)
                 return None
-            logger.error(f"unsupported type {extension} for {path}, using fallback handler")
+            logger.error(f"unsupported type {extension} for {path}, using fallback handler",_already_handled_error=_already_handled_error)
         try:
             return loader(path)
         except Exception as e:
-            logger.error(f"error during loading of file {path}, ( returning None )", e)
+            logger.error(f"error during loading of file {path}, ( returning None )", e, metadata="error from internal method",_already_handled_error=_already_handled_error)
             return None
 
     def read(self, path: "str", add_to_map:bool=False,overwrite_map:bool=False):
@@ -317,17 +336,17 @@ class Loader(Class_Data):
     def image(self,path:"str",add_to_map:bool=False,overwrite_map:bool=False):
         data = self.read(path,add_to_map,overwrite_map)
         if data == None:
-            return Loader.error_asset_map["image"]
+            return Loader.error_asset_map.get("image")
         return data
     def data(self,path:"str",add_to_map:bool=False,overwrite_map:bool=False):
         data = self.read(path,add_to_map,overwrite_map)
         if data == None:
-            return Loader.error_asset_map["data"]
+            return Loader.error_asset_map.get("data")
         return data
     def sound(self,path:"str",add_to_map:bool=False,overwrite_map:bool=False):
         data = self.read(path,add_to_map,overwrite_map)
         if data == None:
-            return Loader.error_asset_map["sound"]
+            return Loader.error_asset_map.get("sound")
         return data
 
     def _preload_folder_list(self,path:"str",preload_data:dict):

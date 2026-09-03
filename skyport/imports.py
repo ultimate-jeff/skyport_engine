@@ -5,14 +5,37 @@ import sys
 import pathlib as pl
 import json
 import csv
-import tomllib
 import threading
 import math
-import numpy as np
 import time
 import random
 import pygame
-import shapely
+
+
+def _load_toml(f):
+    print("could not import tomllib, Loader might not load .toml files correctly ")
+    return None
+
+try:
+    import tomllib
+    def _load_toml(f):
+            return tomllib.load(f)
+except ModuleNotFoundError:
+    try:
+        import toml as tomllib
+        def _load_toml(f):
+                return toml.load(f)
+    except ModuleNotFoundError:
+        _load_toml("error")
+try:
+    import numpy as np
+except ModuleNotFoundError:
+    print("could not import numpy, (do you have numpy?), Util.color_swap might not work correctly")
+try:
+    import shapely
+except ModuleNotFoundError:
+    print("could not import shapely, (do you have shapely?), hitboxses might not work correctly")
+
 
 sys.setrecursionlimit(1500) 
 
