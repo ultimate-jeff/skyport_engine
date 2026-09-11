@@ -9,9 +9,10 @@ from ..imports import (
     math
 )
 
-class Hitbox(Interacotr):
-    def _setup(self,angle=0,on_collide=None):
-        super().__init__()
+class Hitbox(Interacotr,Class_Data):
+    def _setup(self,angle=0,on_collide=None,tags=None):
+        Interacotr.__init__(self)
+        Class_Data.__init__(self,tags=tags)
         self.angle = angle
         self._last_angle = None
         self._is_dirty = True
@@ -20,15 +21,15 @@ class Hitbox(Interacotr):
 
         self.update()
 
-    def __init__(self,x,y,width,height,angle:"int"=0,on_collide=None):
+    def __init__(self,x,y,width,height,angle:"int"=0,on_collide=None,tags=None):
         self.OG_shape = shapely.geometry.box(x,y,x+width,y+height)
-        self._setup(angle,on_collide)
+        self._setup(angle,on_collide,tags)
 
     @classmethod
-    def from_points(cls,points,angle:"int"=0,hole_points=None,on_collide=None):
+    def from_points(cls,points,angle:"int"=0,hole_points=None,on_collide=None,tags=None):
         self = cls.__new__(cls)
         self.OG_shape = shapely.geometry.Polygon(points,hole_points)
-        self._setup(angle,on_collide)
+        self._setup(angle,on_collide,tags)
         return self
 
     def _rotate(self):

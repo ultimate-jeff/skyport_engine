@@ -43,7 +43,7 @@ class Logger(Class_Data):
             print(msg)
         print("----- errors -----")
         for msg in self._errors:
-            print(msg)
+            print(msg+"\n")
         print("---------------")
         self._errors.clear()
         self._logs.clear()

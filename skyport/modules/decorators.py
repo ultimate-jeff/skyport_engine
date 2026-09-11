@@ -46,3 +46,11 @@ def Once(func=None):
         return(decorator(func))
     return decorator
 
+def Lock(lock):
+    def decorator(func):
+        def wrapper(*args,**kwargs):
+            with lock:
+                value = func(args,kwargs)
+            return value
+        return wrapper
+    return decorator

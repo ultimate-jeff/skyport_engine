@@ -773,6 +773,16 @@ def my_func():
     ...
 # now this function can only be called once per class instance
 ```
+### Lock:
+Lock is a decorator that locks a func with a lock
+```python
+
+@skyport.decorators.Lock(my_obj.lock)
+def do_something_that_should_have_a_lock():
+    ...
+
+```
+
 ## hitbox system
 skyport has a hitbox system built on top of shapely 
 ### Hitbox class

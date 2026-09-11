@@ -19,12 +19,11 @@ pygame.display.set_mode((1, 1), pygame.HIDDEN)
 class Raw_Render(Class_Data):
 
     def __init_texture(self,surf,width,height):
-        self.OG_image = surf if surf != None else pygame.Surface((width,height),flags=pygame.SRCALPHA)
+        self.OG_image = surf if surf != None else pygame.Surface((width,height),flags=pygame.SRCALPHA).convert_alpha()
 
     def __init__(self,x:"int",y:"int",width:"int",height:"int",angle:"int",surf:"pygame.Surface"=None,tags:dict=None,_auto_init_update=True):
         """this class is meant to be inherited by other classes or used in them so like class MyGameObj(Render): ...."""
-        super().__init__()
-        self.tags = tags if tags != None else {}
+        Class_Data.__init__(self,tags)
         self._base_init()
         self.rect = pygame.Rect(x,y,width,height)
         self.angle = angle
@@ -32,15 +31,17 @@ class Raw_Render(Class_Data):
         self._last_angle = None
         self._last_size = None
         self._is_dirty = True
+        self._lock = threading.Lock()
         if _auto_init_update:
             self.update_surf()
 
     def _scale(self):
         size = self.rect.size
         if self._last_size != size or self._is_dirty:
-            self._scaled_image = pygame.transform.scale(self.OG_image,size)
-            self._last_size = size
-            self._last_angle = None
+            with self._lock:
+                self._scaled_image = pygame.transform.scale(self.OG_image,size)
+                self._last_size = size
+                self._last_angle = None
     def _rotate(self):
         if self._last_angle != self.angle or self._is_dirty:
             self.image = pygame.transform.rotate(self._scaled_image,self.angle)
@@ -78,17 +79,20 @@ class Raw_Render(Class_Data):
         self.update_surf()
 
     def get_surf(self) -> pygame.Surface:
-        return self.image
+        with self._lock:
+            return self.OG_image
     
     def blit(self,source: "pygame.Surface", dest: "pygame.RectLike" = (0, 0), area: "pygame.RectLike" = None, special_flags: "int" = 0):
         """blits to surf and auto updates"""
-        self._is_dirty = True
-        self.OG_image.blit(source,dest,area,special_flags)
+        with self._lock:
+            self._is_dirty = True
+            self.OG_image.blit(source,dest,area,special_flags)
         #self.update_surf(True)
     def fill(self,color:"tuple"=(0,0,0,0),rect:"pygame.Rect"=None,special_flags:"int"=0):
         """fills surf and auto updates"""
-        self._is_dirty = True
-        self.OG_image.fill(color,rect,special_flags)
+        with self._lock:
+            self._is_dirty = True
+            self.OG_image.fill(color,rect,special_flags)
         #self.update_surf(True)
 
     def force_update(self):
@@ -98,7 +102,7 @@ class Raw_Render(Class_Data):
         pass
 
 class Render(Raw_Render,Interacotr):
-    def __init__(self, x, y, width, height, angle, surf = None, tags = {}):
+    def __init__(self, x, y, width, height, angle, surf = None, tags=None):
         Raw_Render.__init__(self,x,y,width,height,angle,surf,tags)
         Interacotr.__init__(self)
 

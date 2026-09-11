@@ -25,7 +25,7 @@ REZ_DCI_4K = (4096,2160)
 REZ_5K = (5120,2880)
 REZ_8K = (7680,4320)
 
-__version__ = "0.2.31"
+__version__ = "0.2.32"
 
 from .imports import pygame
 from . import imports
@@ -55,7 +55,6 @@ from .main import (
 
 from .modules import decorators
 
-from .modules import hitbox
 from .modules.hitbox import (
     Hitbox,
     Hitbox_Manager
