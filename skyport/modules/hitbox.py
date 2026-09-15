@@ -18,7 +18,8 @@ class Hitbox(Interacotr,Class_Data):
         self._is_dirty = True
         self.origin = self.OG_shape.centroid
         self.on_collide = on_collide
-
+        minx, miny, maxx, maxy = self.shape.bounds
+        self.rect = pygame.Rect(minx,miny,maxx,maxy)
         self.update()
 
     def __init__(self,x,y,width,height,angle:"int"=0,on_collide=None,tags=None):
@@ -32,9 +33,14 @@ class Hitbox(Interacotr,Class_Data):
         self._setup(angle,on_collide,tags)
         return self
 
+    def _update_rect(self):
+        minx, miny, maxx, maxy = self.shape.bounds
+        self.rect = pygame.Rect(minx,miny,maxx,maxy)
+
     def _rotate(self):
         if(self._last_angle != self.angle or self._is_dirty):
             self._last_angle = self.angle
+            self._update_rect()
             self._is_dirty = False
             self.shape = shapely.affinity.rotate(
                 self.OG_shape,
@@ -61,6 +67,8 @@ class Hitbox(Interacotr,Class_Data):
         except Exception as e:
             logger.error(f"could not couculate a collision between {type(self)} with id of {self.id} and {type(other_hitbox)} . e -> {e}")
             return False
+    def clipline(self,x1,y1,x2,y2):
+        return self.rect.clipline(x1,y1,x2,y2)
 
     def get_pos(self):
         return (self.origin.x,self.origin.y)
