@@ -142,6 +142,13 @@ class Util(Class_Data):
         dist = math.hypot(dx, dy)
         angle = (math.degrees(math.atan2(dy, dx)) + 180) % 360
         return angle,dist
+
+    def polar_to_grid(self,angle:"int",dist:"int"):
+        """converts ur angle and dist polar cord into an x and y"""
+        dx = math.cos(angle) * dist
+        dy = math.sin(angle) * dist
+        return (dx,dy)
+    
     def pryoraty(self,a=None,b=None):
         """"this will alwas return a if there is an a i know aaaaaaaa thats scary"""
         if a != None:

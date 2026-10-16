@@ -152,6 +152,19 @@ while display_manager.running:
     display_manager.tick(tps=20)
 ```
 Creating the game loop is very simple.
+
+u can also have the rendering loop be on the same thread as the main loop 
+```python
+display_manager.create_window() # create window 
+display_manager.running = True
+
+while display_manager.running:
+
+    display_manager.event_handler()
+    display_manager.update_window() # make shure to update the window 
+    display_manager.tick(tps=60)
+
+```
 ## keybinds and event handler :
 there are 3 types of binds : key up , key down , key pressed
 these you can bind any function to any of the 3 types and you can have multiple functions on 1 key
@@ -177,6 +190,10 @@ you might want to use mouse position on some of your games and to do that you wo
 ```python
 mouse_pos = display_manager.get_mouse_pos() # this returns (x,y)
 ```
+
+you can also manualy add binds via the display_manager.keybinds dict or via the add_bind method 
+
+and via the remove_bind
 ### how binds get triggered :
 for your keybinds to work in the game loop the event handler must be called
 ```python

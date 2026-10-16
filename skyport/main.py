@@ -107,8 +107,8 @@ class Render(Raw_Render,Interacotr):
         Interacotr.__init__(self)
 
 class Layer(Render):
-    def __init__(self,width:"int", height:"int" , x:"int"=0, y:"int"=0, angle:"int"=0, surf:"pygame.Surface" = None,fill_color:"tuple"=None,fill_every_frame=True):
-        super().__init__(x, y, width, height, angle, surf)
+    def __init__(self,width:"int", height:"int" , x:"int"=0, y:"int"=0, angle:"int"=0, surf:"pygame.Surface" = None,fill_color:"tuple"=None,fill_every_frame=True,tags=None):
+        super().__init__(x, y, width, height, angle, surf,tags=tags)
         self.objs = []
         self.fill_color = fill_color if fill_color != None else (0,0,0,0) 
         self.fill_every_frame = fill_every_frame
@@ -429,11 +429,11 @@ class Display_Manager(Class_Data):
             "update":threading.Lock()
         }
         self.keybinds = {
-            "up":{},
-            "down":{},
+            pygame.KEYUP:{},
+            pygame.KEYDOWN:{},
             "buttons":{},
-            "joy_button_up":{},
-            "joy_button_down":{},
+            pygame.JOYBUTTONUP:{},
+            pygame.JOYBUTTONDOWN:{},
 
             }
         self.event_que = {}
@@ -513,8 +513,11 @@ class Display_Manager(Class_Data):
             self.window.blit(self._s_display,self._W_pos)
             pygame.display.flip()
 
+    def create_window(self):
+        self.window = self.window = pygame.display.get_surface()
+
     def _rendering_loop(self):
-        self.window = self.window = pygame.display.get_surface() #pygame.display.set_mode(self.window_size,pygame.DOUBLEBUF | pygame.HWSURFACE | pygame.RESIZABLE)
+        self.create_window() #pygame.display.set_mode(self.window_size,pygame.DOUBLEBUF | pygame.HWSURFACE | pygame.RESIZABLE)
         self.__clock = pygame.time.Clock()
         while (self.running):
             self.update_window()
@@ -563,10 +566,10 @@ class Display_Manager(Class_Data):
                 self.event_que = events
                 for event in events:
                     if event.type == pygame.KEYDOWN:
-                        funcs = self.keybinds["down"].get(event.key,[lambda : logger.log(f"key {event.key} is not bound (keydonw)")])
+                        funcs = self.keybinds[pygame.KEYDOWN].get(event.key,[lambda : logger.log(f"key {event.key} is not bound (keydonw)")])
                         self._exacute_funcs(funcs)
                     if event.type == pygame.KEYUP:
-                        funcs = self.keybinds["up"].get(event.key,[lambda : logger.log(f"key {event.key} is not bound (keyup)")])
+                        funcs = self.keybinds[pygame.KEYUP].get(event.key,[lambda : logger.log(f"key {event.key} is not bound (keyup)")])
                         self._exacute_funcs(funcs)
 
                     if event.type == pygame.QUIT:
@@ -630,18 +633,22 @@ class Display_Manager(Class_Data):
         else:
             binds.append(func)
 
+    def add_bind(self,_type,key,func):
+        if _type in self.keybinds.keys():
+            self._add_bind(_type,key,func)
+
     def add_keyup_bind(self,key:"int",func:"function"):
-        self._add_bind("up",key,func)
+        self._add_bind(pygame.KEYUP,key,func)
     def add_keydown_bind(self,key:"int",func:"function"):
-        self._add_bind("down",key,func)
+        self._add_bind(pygame.KEYDOWN,key,func)
     def add_keypressed_bind(self,key:"int",func:"function"):
         self._add_bind("buttons",key,func)
     def add_joy_button_down_bind(self,button_index:"int",func:"function"):
         """Note the functions must be able to take 1 peramiter of the joystick id"""
-        self._add_bind("joy_button_down",button_index,func)
+        self._add_bind(pygame.JOYBUTTONDOWN,button_index,func)
     def add_joy_button_up_bind(self,button_index:"int",func:"function"):
         """Note the functions must be able to take 1 peramiter of the joystick id"""
-        self._add_bind("joy_button_up",button_index,func)
+        self._add_bind(pygame.JOYBUTTONUP,button_index,func)
 
     def _remove_bind(self,_type,key,funcs):
         funcs = funcs if isinstance(funcs,(tuple,list)) else [funcs]
@@ -656,6 +663,10 @@ class Display_Manager(Class_Data):
                 logger.log(f"function to {key} not found. func->{func}")
         if not binds:
             del self.keybinds[_type][key]
+
+    def remove_bind(self,_type,key,funcs):
+        if _type in self.keybinds.keys():
+            self._remove_bind(_type,key,funcs)
 
     def remove_keyup_bind(self,key:"int",func:"function"):
         self._remove_bind("up",key,func)

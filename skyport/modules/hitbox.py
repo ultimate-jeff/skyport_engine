@@ -61,7 +61,7 @@ class Hitbox(Interacotr,Class_Data):
         try:
             if (self.shape.intersects(_other_hitbox)):
                 if self.on_collide != None:
-                    self.on_collide()
+                    self.on_collide(other_hitbox=_other_hitbox)
                 return True
             return False
         except Exception as e:
