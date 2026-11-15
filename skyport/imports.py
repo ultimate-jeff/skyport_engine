@@ -31,10 +31,12 @@ try:
     import numpy as np
 except ModuleNotFoundError:
     print("could not import numpy, (do you have numpy?), Util.color_swap might not work correctly")
+    np = None
 try:
     import shapely
 except ModuleNotFoundError:
     print("could not import shapely, (do you have shapely?), hitboxses might not work correctly")
+    shapely = None
 
 
 sys.setrecursionlimit(1500) 

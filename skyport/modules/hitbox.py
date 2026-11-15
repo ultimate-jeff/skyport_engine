@@ -9,9 +9,8 @@ from ..imports import (
     math
 )
 
-class Hitbox(Interacotr,Class_Data):
+class Hitbox(Class_Data):
     def _setup(self,angle=0,on_collide=None,tags=None):
-        Interacotr.__init__(self)
         Class_Data.__init__(self,tags=tags)
         self.angle = angle
         self._last_angle = None

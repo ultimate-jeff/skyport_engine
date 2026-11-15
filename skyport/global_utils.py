@@ -2,6 +2,7 @@
 from .imports import *
 
 class Class_Data:
+    """this class records how many instances of said class have been created"""
     instances = 0
     def __init__(self,tags=None):
         if getattr(self,"_class_data_initialized",False):
@@ -10,22 +11,12 @@ class Class_Data:
         type(self).instances += 1
         self.id = type(self).instances
         self.tags = {} if tags == None else tags
-    def release_id(self,amount=1):
-        # this is to free up id's
-        type(self).instances -= amount
 
-    def random_function(self):
-        try:
-            choice = (self.id ^ len(self.tags.keys()) + 32) % type(self).instances
-            if choice == 2:
-                time.sleep(choice)
-            if choice > 5:
-                print(f"wow you actualy managed to make 5 or more {type(self)} instances")
-            else:
-                pass
-            
-        except Exception as e:
-            print(f"srry this function dose nothing oops    !!-{e}-!!")
+    def __del__(self):
+        type(self).instances -= 1
+        
+    def _update_(self,event,*args,**kwargs):
+        pass
 
 class Logger(Class_Data):
     def __init__(self):
@@ -34,10 +25,13 @@ class Logger(Class_Data):
         self._errors = []
         self._logs = []
         self.tags = {}
+        self.total_sevarity = 0.0
+        self.error_threashhold = 1.0
 
     def log(self,msg:"str"):
         self._logs.append(msg)
     def output_print_data(self,include_errors=True):
+        """prints all the logs and errors"""
         print("----- logs -----")
         for msg in self._logs:
             print(msg)
@@ -47,20 +41,22 @@ class Logger(Class_Data):
         print("---------------")
         self._errors.clear()
         self._logs.clear()
-    def error(self,msg:"str",error=None,metadata:"str"="",sevarity_index:"int"=0,_already_handled_error=False):
+    def error(self,msg:"str",error=None,metadata:"str"="",sevarity:"float"=0,_already_handled_error=False):
+        """loggs an error (sevarity is in persentages 1 = 100%, 0.5 = 50%,0.0 = 0% )"""
         if _already_handled_error:
             return
+        if self.total_sevarity >= self.error_threashhold:
+            pass
         if error == None:
-            self._errors.append(f"{self.sevarity_index[sevarity_index]}!!- error -> {msg} , extra_data -> {metadata} -!!{prin_RESET}")
-            if sevarity_index >= 3:
-                self.output_print_data()
-                exit(1)
-            return None     
+            self._errors.append(f"{self.sevarity_index[sevarity]}!!- error -> {msg} , extra_data -> {metadata} -!!{prin_RESET}")   
         else:
-            self._errors.append(f"{self.sevarity_index[sevarity_index]}!!- error -> {msg} , extra_data -> {metadata} , python error : {error}-!!{prin_RESET}")
-            if sevarity_index >= 3:
-                self.output_print_data()
-                exit(1)
+            self._errors.append(f"{self.sevarity_index[sevarity]}!!- error -> {msg} , extra_data -> {metadata} , python error : {error}-!!{prin_RESET}")
+        self.total_sevarity += sevarity
+        if self.total_sevarity >= self.error_threashhold:
+            self.output_print_data()
+            exit(1)
+            
+
     def get_last_error(self):
         return self._errors[-1]
     def get_last_log(self):
@@ -68,6 +64,7 @@ class Logger(Class_Data):
     def has_logs(self):
         return (self._errors != [] and self._logs != [])
     def print(self):
+        """prints all loggs and errors if there are any"""
         if self.has_logs():
             self.output_print_data()
                 
@@ -89,6 +86,7 @@ class Interacotr():
         self._base_init()
 
     def _handle_events(self,events): # i need to optomize this to loop over self.events instead of events
+        """this handles the events and keybinds for this class"""
         for event in events:
             if event.type in self.events:
                 sub_dict = self.events[event.type]
@@ -119,93 +117,11 @@ class Interacotr():
         else:
             sub_container[button].append(func)
 
-    def _update_(self,events):
+    def _update_(self,events,*args,**kwargs):
+            """this is called every frame and bust call self._handle_events(events) to work proporly"""
             self._handle_events(events)
 
 
-
-class Util(Class_Data):
-    def __init__(self):
-        super().__init__()
-
-    def snap_in_bounds(self,value:"int",max_value:"int",min_value:"int"):
-        return max(min(value,max_value),min_value)
-
-    def dot_product(self,vec1:"tuple[int,float]",vec2:"tuple[int,float]"):
-        """returns the dod product of 2 2d vectors (x,y)"""
-        return vec1[0]*vec2[0] + vec1[1]*vec2[1]
-
-    def get_angle_and_dist(self,x1:"int",y1:"int",x:"int",y:"int"):
-        """returns the angle and dist between 2 points (it returns that data in that ordor )"""
-        dx = x1 - x
-        dy = y1 - y
-        dist = math.hypot(dx, dy)
-        angle = (math.degrees(math.atan2(dy, dx)) + 180) % 360
-        return angle,dist
-
-    def polar_to_grid(self,angle:"int",dist:"int"):
-        """converts ur angle and dist polar cord into an x and y"""
-        dx = math.cos(angle) * dist
-        dy = math.sin(angle) * dist
-        return (dx,dy)
-    
-    def pryoraty(self,a=None,b=None):
-        """"this will alwas return a if there is an a i know aaaaaaaa thats scary"""
-        if a != None:
-            return a
-        else:
-            return b
-    def snap_cords_in_bounds(self,x:"int",y:"int",max_x:"int",max_y:"int",min_x:"int"=0,min_y:"int"=0):
-        """this snaps a point inside of a rect arya """
-        new_x = min(max(x,min_x),max_x-1)
-        new_y = min(max(y,min_y),max_y-1)
-        return new_x,new_y
-    def couculate_dx_dy(self,dist:"int",angle:"float"):
-        rad = math.radians(angle)
-        dx = dist * math.cos(rad)
-        dy = dist * math.sin(rad)
-        return dx,dy
-    def couculate_angle_dist(self,dx:"int",dy:"int"):
-        speed = math.sqrt(dx**2 + dy**2)
-        angle = math.atan2(dy,dx)
-        return angle,speed
-
-    def play_sound(self,soud_obj:"pygame.mixer.Sound", volume=0.5,loops=0):
-        try:
-            soud_obj.set_volume(volume)
-            soud_obj.play(loops)
-            return 1
-        except Exception as e:
-            logger.error("error trying to play sound",e)
-    def play_sound_from_point(self,pf,sound_pos:"tuple",listener_pos:"tuple",volume:"float"=0.5,loops:"int"=0,distance_fade:"float"=0.5):
-        """this playes a sound from a point"""
-        max_vol = volume
-        dist = math.hypot(sound_pos[0] - listener_pos[0], sound_pos[1] - listener_pos[1])
-        volume *= max(0, 1 - dist / distance_fade)
-        self.play_sound(pf, volume, loops)
-
-    def warp_image(self,image:"pygame.Surface",sizex:"int",sizey:"int",angle:"float"):
-        image1 = pygame.transform.scale(image,(sizex,sizey))
-        image2 = pygame.transform.rotate(image1,angle)
-        return image2
-    def rotate_image(self,image:"pygame.Surface",angle:"float"):
-        image2 = pygame.transform.rotate(image,angle)
-        return image2
-    def scale_image(self,image:"pygame.Surface",sizex:"int",sizey:"int"):
-        image1 = pygame.transform.scale(image,(sizex,sizey))
-        return image1
-
-    def color_swap(self,surface: 'pygame.Surface', old_color: tuple, new_color: tuple) -> 'pygame.Surface':
-        """returns a surf that every instance of one color is replaced with a nuther"""
-        arr_rgb = pygame.surfarray.array3d(surface)
-        arr_alpha = pygame.surfarray.array_alpha(surface)
-        mask = np.all(arr_rgb == old_color, axis=-1)
-        arr_rgb[mask] = new_color
-        new_surface = pygame.Surface(surface.get_size(), pygame.SRCALPHA, 32)
-        new_surface = new_surface.convert_alpha()
-        pygame.surfarray.blit_array(new_surface, arr_rgb)
-        pygame.surfarray.pixels_alpha(new_surface)[:] = arr_alpha
-        return new_surface
 
 def Load_file(func,mode="r"):
     """this wrapper you pass in a lambda function that takes a file obj and reads the data and returns it"""
@@ -312,7 +228,7 @@ class Loader(Class_Data):
         logger.error(f"could not create alias to {path} do to {path} not being found in Loader map")
     def get_map(self):
         return self._map
-    def set_map(self,mapp):
+    def set_map(self,mapp:dict):
         self._map = mapp
     def _load_file(self,path,_already_handled_error=False):
         path = self.resolve_path(path)
@@ -390,17 +306,28 @@ class Loader(Class_Data):
              self._preload_folder_dict(k,preload_data)
         else: # defalt loading of path as the file
             self.read(path=k,add_to_map=True,overwrite_map=True)
-    def load_from_map(self,map_path:"str"):
+    def load_from_dict(self,data:dict,completion_hook:callable=None,*completion_args,completion_kwargs,map_name:"str"=""):
+        keys = data.keys()
+        for k in keys:
+            self._preload_elm(k,data) 
+        logger.log(f"Loader {self.id} is complete loading map {map_name}")
+        if completion_hook:
+            completion_hook(completion_args,completion_kwargs)
+    def load_from_map(self,map_path:"str",completion_hook:callable=None,*completion_args,**completion_kwargs):
         data = self.read(map_path,False)
         if(type(data) != dict):
             logger.error(f"Loader {self.id} canot load {map_path} as a Loader map (file is not .json)")
             return
-        keys = data.keys()
-        for k in keys:
-            self._preload_elm(k,data) 
-        logger.log(f"Loader {self.id} is complete loading map {map_path}")
-    def load_map_on_thread(self, map_path: "str"):
-        thread = threading.Thread(target=self.load_from_map, args=(map_path,))
+        self.load_from_dict(data,completion_hook,completion_args,completion_kwargs,map_name=map_path)
+    def load_from_str(self,data:str,completion_hook:callable=None,*completion_args,completion_kwargs,map_name:"str"=""):
+        try:
+            json_data = json.load(data)
+            self.load_from_dict(json_data,completion_hook,completion_args,completion_kwargs,map_name=map_name)
+        except json.JSONDecodeError as e:
+            logger.error(f"could not load string map from map named {map_name}",e,sevarity=0.02)
+
+    def load_map_on_thread(self, map_path: "str",completion_hook:callable=None,*completion_args,**completion_kwargs):
+        thread = threading.Thread(target=self.load_from_map, args=(map_path,completion_hook,completion_args,completion_kwargs))
         thread.start()
         return thread
     def join_maps(self,map_a,map_b):
@@ -431,7 +358,9 @@ class Loader(Class_Data):
                 json.dump(mapp,f,indent=4)
         except Exception as e:
             logger.error(f"failed to save Loader map to path {path}",e)
-
+    def clear_map(self):
+        """this clears all pre loaded files out of memory"""
+        self._map.clear()
 
 class Delta_timer(Class_Data):
     def __init__(self):

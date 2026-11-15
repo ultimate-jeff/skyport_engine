@@ -25,7 +25,7 @@ REZ_DCI_4K = (4096,2160)
 REZ_5K = (5120,2880)
 REZ_8K = (7680,4320)
 
-__version__ = "0.2.34"
+__version__ = "0.3.0"
 
 from .imports import pygame
 from . import imports
@@ -33,32 +33,37 @@ from . import imports
 from .global_utils import (
     Loader,
     logger,
-    Util,
     Delta_timer,
     Save_file,
     Load_file,
     Class_Data,
     Interacotr
-    )
+)
+
 from .main import (
     Display_Manager,
     Render,
     Layer,
-    SDL2_Display_Manager,
     Chunk,
     Chunked_Layer,
     Font_Render,
     Camera,
     Animated_Render,
-    Raw_Render
-    )
+    Interactor_Render,
+    Interactor_Layer,
+)
 
-from .modules import decorators
+from .modules import (
+    decorators,
+    hitbox,
+    util
+)
 
 from .modules.hitbox import (
-    Hitbox,
-    Hitbox_Manager
+    Hitbox
 )
+
+
 
 def _set_recursion_depth(depth=1500):
     from global_utils import sys
