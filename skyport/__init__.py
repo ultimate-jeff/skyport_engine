@@ -25,7 +25,7 @@ REZ_DCI_4K = (4096,2160)
 REZ_5K = (5120,2880)
 REZ_8K = (7680,4320)
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 
 from .imports import pygame
 from . import imports
